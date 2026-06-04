@@ -1,0 +1,82 @@
+{
+  "name": "kaivo-pdf",
+  "productName": "Kaivo PDF",
+  "version": "1.0.0",
+  "description": "Free PDF reader, editor, and converter",
+  "main": "main.js",
+  "author": "Kaivo",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "^42.3.3",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.kaivo.pdf",
+    "productName": "Kaivo PDF",
+    "copyright": "Copyright © 2025 Kaivo",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "icon.png",
+      "icon.ico",
+      "pdf-file-icon.ico",
+      "installer.nsh"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "fileAssociations": [
+        {
+          "ext": "pdf",
+          "name": "PDF Document",
+          "description": "PDF Document",
+          "icon": "pdf-file-icon.ico",
+          "role": "Editor"
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": false,
+      "perMachine": false,
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Kaivo PDF",
+      "include": "installer.nsh"
+    }
+  },
+  "dependencies": {
+    "canvas": "^3.2.3",
+    "mammoth": "^1.12.0",
+    "pdf-lib": "^1.17.1",
+    "pdfkit": "^0.18.0"
+  }
+}

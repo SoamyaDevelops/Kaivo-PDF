@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; worker-src blob: https://cdn.jsdelivr.net;">
+<title>Kaivo PDF</title>
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F6F4F0;--surface:#fff;--sb:#EDEAE5;--border:#DEDAD2;
+  --text:#17160F;--muted:#8C8880;--accent:#C0431F;--acl:#F5EBE7;
+  --font:'Inter',system-ui,sans-serif;--r:7px;
+  --editor-page:#fff;--editor-page-shadow:0 2px 16px rgba(0,0,0,.1);
+}
+body.dark{
+  --bg:#1A1917;--surface:#242220;--sb:#1E1C1A;--border:#38352F;
+  --text:#E8E4DC;--muted:#7A7670;--accent:#E05A2B;--acl:#2A1A12;
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;line-height:1.45;overflow:hidden;user-select:none}
+#editor-scroll,#editor-wrap,#editor-page,#rich,.editor-page{user-select:text!important;-webkit-user-select:text!important}
+#rich[contenteditable]{-webkit-user-select:text!important;user-select:text!important;cursor:text!important;pointer-events:auto!important}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#C8C3BA}
+
+/* ── TITLEBAR ─────────────────────── */
+#titlebar{height:40px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:10px;-webkit-app-region:drag;flex-shrink:0}
+.wbtns{display:flex;gap:6px;-webkit-app-region:no-drag}
+.wb{width:12px;height:12px;border-radius:50%;border:none;cursor:pointer;transition:filter .12s;flex-shrink:0}
+.wb.c{background:#FF5F57}.wb.m{background:#FFBD2E}.wb.x{background:#28C840}
+.wb:hover{filter:brightness(.8)}
+.brand{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;letter-spacing:-.15px;-webkit-app-region:no-drag}
+.brand img{width:20px;height:20px;object-fit:contain}
+#doctitle{flex:1;text-align:center;font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:360px}
+.tbtns{display:flex;gap:1px;-webkit-app-region:no-drag}
+.tbtn{width:28px;height:26px;border:none;background:transparent;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;transition:background .1s,color .1s}
+.tbtn:hover{background:var(--bg);color:var(--text)}
+.tbtn.red:hover{background:#FF5F5720;color:#FF5F57}
+
+/* ── LAYOUT ───────────────────────── */
+#app{display:flex;flex-direction:column;height:100vh}
+#body{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* ── SIDEBAR ──────────────────────── */
+#sidebar{width:196px;background:var(--sb);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.sblabel{font-size:9.5px;font-weight:600;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;padding:10px 14px 4px}
+.sbitem{display:flex;align-items:center;gap:8px;padding:7px 10px;margin:1px 6px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text);transition:background .1s;white-space:nowrap;overflow:hidden}
+.sbitem i{font-size:15px;color:var(--muted);flex-shrink:0}
+.sbitem:hover{background:rgba(0,0,0,.06)}
+.sbitem.on{background:var(--surface);color:var(--accent);font-weight:500}
+.sbitem.on i{color:var(--accent)}
+.sbdiv{height:1px;background:var(--border);margin:5px 10px}
+.sbrec{display:flex;align-items:center;gap:6px;padding:5px 8px;margin:1px 6px;border-radius:5px;cursor:pointer;font-size:11px;color:var(--muted);position:relative}
+.sbrec i{font-size:13px;flex-shrink:0}
+.sbrec span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sbrec:hover{background:rgba(0,0,0,.06);color:var(--text)}
+.sbrec-actions{display:none;align-items:center;gap:4px}
+.sbrec:hover .sbrec-actions, .sbrec.pinned .sbrec-actions{display:flex}
+.sbrec-btn{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;padding:2px;border-radius:3px;transition:background .12s,color .12s}
+.sbrec-btn:hover{background:rgba(0,0,0,0.08);color:var(--text)}
+.sbrec-btn.pin-btn.pinned{color:var(--accent)}
+#sbreclist{overflow-y:auto;flex:1;padding-bottom:4px}
+#sbbot{padding:4px 0 8px;flex-shrink:0}
+
+/* ── MAIN ─────────────────────────── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ── CONTEXT TOOLBAR ──────────────── */
+#ctxbar{height:36px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 8px;gap:2px;flex-shrink:0;overflow-x:auto}
+.ctxbtn{display:flex;align-items:center;gap:4px;padding:4px 8px;border:none;background:transparent;border-radius:5px;cursor:pointer;color:var(--text);font-size:11.5px;font-family:var(--font);white-space:nowrap;transition:background .1s}
+.ctxbtn:hover{background:var(--bg)}
+.ctxbtn i{font-size:14px;color:var(--muted)}
+.ctxbtn.prim{color:var(--accent)}
+.ctxbtn.prim i{color:var(--accent)}
+.ctxbtn:disabled{opacity:.4;cursor:default}
+.ctxsep{width:1px;height:18px;background:var(--border);margin:0 3px;flex-shrink:0}
+.zbar{display:flex;align-items:center;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:2px 6px}
+.zbtn{border:none;background:transparent;cursor:pointer;color:var(--text);font-size:15px;width:20px;height:20px;border-radius:3px;display:flex;align-items:center;justify-content:center}
+.zbtn:hover{background:var(--border)}
+#zval{font-size:12px;min-width:36px;text-align:center;font-weight:500}
+
+/* ── PANELS ───────────────────────── */
+#panels{flex:1;overflow:hidden;position:relative}
+.panel{position:absolute;inset:0;overflow-y:auto;padding:20px 22px;display:none;z-index:0}
+.panel.on{display:block;z-index:1}
+.ph{display:flex;align-items:baseline;gap:8px;margin-bottom:18px}
+.ph h1{font-size:16px;font-weight:600}
+.ph span{font-size:11px;color:var(--muted)}
+
+/* ── PDF VIEWER ───────────────────── */
+#viewer-wrap{display:flex;position:absolute;inset:0}
+#thumbstrip{width:70px;flex-shrink:0;overflow-y:auto;padding:8px 5px;display:flex;flex-direction:column;gap:6px;border-right:1px solid var(--border)}
+.thumb{background:var(--surface);border:1.5px solid var(--border);border-radius:3px;cursor:pointer;text-align:center;padding:3px;font-size:9px;color:var(--muted);transition:border-color .1s}
+.thumb.on{border-color:var(--accent);color:var(--accent)}
+.thumbimg{background:var(--bg);height:72px;border-radius:2px;display:flex;align-items:center;justify-content:center;margin-bottom:2px;overflow:hidden}
+.thumbimg canvas{max-width:100%;max-height:100%}
+.thumbimg i{font-size:18px;color:#CCC}
+
+/* FIX: viewer scroll with proper page display */
+#viewer-main{flex:1;display:flex;position:relative;min-width:0;min-height:0}
+#viewer-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:16px 16px 32px;gap:14px;background:var(--bg)}
+#viewer-pagenum{position:absolute;right:10px;bottom:14px;font-size:10px;font-weight:500;color:var(--text);background:var(--surface);border:1px solid var(--border);padding:5px 11px;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.1);z-index:2;pointer-events:none;white-space:nowrap}
+.pdfpage{background:var(--surface);border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.08);border-radius:3px;position:relative;overflow:hidden;flex-shrink:0;/* Width determined by canvas content */}
+.pdfpage canvas{display:block;/* canvas already has correct dimensions */}
+#viewer-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--muted)}
+#viewer-empty i{font-size:52px;opacity:.25}
+#viewer-empty p{font-size:13px}
+#viewer-empty .hint{font-size:11px;opacity:.7}
+
+/* ── EDITOR: page-sized writing area ── */
+#panel-editor{padding:0!important}
+#panel-editor.on{display:flex!important;flex-direction:column}
+#editor-top{padding:14px 20px 0;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+#editor-toolbar{display:flex;flex-wrap:wrap;gap:2px;align-items:center;padding-bottom:10px}
+.ebtn{border:none;background:transparent;border-radius:4px;cursor:pointer;padding:4px 7px;font-size:12px;color:var(--text);font-family:var(--font);transition:background .1s;line-height:1;display:flex;align-items:center;gap:3px;pointer-events:auto!important;user-select:none!important;-webkit-user-select:none!important}
+.ebtn:hover{background:var(--bg)}
+.ebtn.on{background:var(--acl);color:var(--accent)}
+.esel{border:1px solid var(--border);border-radius:4px;padding:3px 5px;font-size:11.5px;font-family:var(--font);background:var(--surface);color:var(--text);cursor:pointer;outline:none}
+.enum{width:42px;border:1px solid var(--border);border-radius:4px;padding:3px 4px;font-size:11.5px;font-family:var(--font);background:var(--surface);color:var(--text);text-align:center;outline:none}
+.esep{width:1px;height:18px;background:var(--border);flex-shrink:0;margin:0 1px}
+.cdot{width:16px;height:16px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .12s;flex-shrink:0}
+.cdot.on{border-color:var(--text)}
+
+/* Editor scroll area with page-like preview */
+#editor-scroll{flex:1;overflow-y:auto;background:var(--bg);padding:24px 20px;display:flex;flex-direction:column;align-items:center}
+#editor-wrap{position:relative;width:fit-content}
+#editor-page-backdrops{position:absolute;top:0;left:0;right:0;pointer-events:none;z-index:0}
+.editor-page-backdrop{background:#fff;box-shadow:var(--editor-page-shadow);box-sizing:border-box;pointer-events:none}
+.editor-page{background:transparent!important;box-shadow:none!important;position:relative;z-index:1;padding:72px 88px;/* padding set by JS */}
+.page-break-line{width:100%;height:0;border-top:2px dashed var(--accent);position:absolute;left:0;right:0;z-index:2;pointer-events:none;margin:0}
+.page-break-label{position:absolute;right:0;top:-9px;background:var(--acl);color:var(--accent);font-size:9px;padding:1px 6px;border-radius:3px;font-weight:500}
+#rich{min-height:100%;outline:none;font-size:14px;line-height:1.8;color:#17160F;user-select:text;-webkit-user-select:text;caret-color:var(--accent);pointer-events:auto!important;cursor:text;display:block;position:relative;z-index:2}
+#rich:focus{outline:none}
+#rich p{margin:0 0 4px}
+.kaivo-page-gap{display:block;margin:0;padding:0;border:0;user-select:none;-webkit-user-select:none;pointer-events:none}
+#rich table{border-collapse:collapse;width:100%;margin:10px 0}
+#rich th,#rich td{border:1px solid #DEDAD2;padding:6px 9px;font-size:12px}
+#rich th{background:#F6F4F0;font-weight:500;color:#17160F}
+/* Paper stays white with dark text even in dark mode */
+#panel-editor .editor-page-backdrop{background:#fff!important;box-shadow:var(--editor-page-shadow)}
+#panel-editor #rich{color:#17160F!important}
+#panel-editor #rich td{color:#17160F}
+#editor-foot{padding:8px 20px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+#autosave-status{font-size:10.5px;color:var(--muted);margin-left:auto}
+
+/* ── SHARED ───────────────────────── */
+.finp{border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12.5px;font-family:var(--font);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
+.finp:focus{border-color:var(--accent)}
+.saverow{display:flex;gap:8px;align-items:center;margin-top:10px}
+.lbl{font-size:11px;color:var(--muted);white-space:nowrap}
+.btnp{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:7px 15px;font-size:12.5px;font-family:var(--font);cursor:pointer;font-weight:500;display:flex;align-items:center;gap:5px;transition:background .12s;white-space:nowrap}
+.btnp:hover{background:#A83519}
+.btng{background:transparent;border:1px solid var(--border);border-radius:6px;padding:7px 12px;font-size:12.5px;font-family:var(--font);cursor:pointer;color:var(--text);transition:background .1s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.btng:hover{background:var(--bg)}
+
+/* ── CONVERT ──────────────────────── */
+.cvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:16px}
+.cvc{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.cvc:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(192,67,31,.08)}
+.cvico{width:32px;height:32px;background:var(--acl);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:10px}
+.cvico i{font-size:16px}
+.cvc h3{font-size:13px;font-weight:600;margin-bottom:3px}
+.cvc p{font-size:11px;color:var(--muted);line-height:1.5}
+.dropz{border:1.5px dashed var(--border);border-radius:8px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:12px}
+.dropz:hover,.dropz.drag{border-color:var(--accent);background:var(--acl)}
+.dropz i{font-size:24px;color:var(--muted);display:block;margin-bottom:6px}
+.dropz p{font-size:12px;color:var(--muted)}
+.dropz strong{color:var(--text)}
+#convdrop{display:none;border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:0;background:var(--surface)}
+.convtop{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.convtag{background:var(--acl);color:var(--accent);font-size:12px;font-weight:500;padding:3px 9px;border-radius:20px}
+#filelist{margin-bottom:10px;display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto}
+.fitem{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:5px;padding:6px 9px;font-size:11.5px}
+.fitem i{font-size:14px;color:var(--muted);flex-shrink:0}
+.fitem .fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fitem .fsz{color:var(--muted);font-size:10.5px;flex-shrink:0}
+.fitem .frm{border:none;background:transparent;cursor:pointer;color:var(--muted);padding:2px;border-radius:3px;font-size:13px}
+.fitem .frm:hover{background:var(--border);color:var(--text)}
+#progwrap{background:var(--acl);border-radius:7px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-top:8px}
+.progbar{height:3px;background:rgba(192,67,31,.2);border-radius:2px;margin-top:6px;overflow:hidden}
+.progfill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .2s}
+
+
+
+/* ── RENAME ───────────────────────── */
+.rnbox{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:12px;max-width:480px}
+.rnbox label{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-bottom:6px;margin-top:10px}
+.rnbox label:first-child{margin-top:0}
+.currfile{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:5px;padding:8px 10px;font-size:12px;overflow:hidden}
+.currfile span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.expgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:2px}
+
+/* ── LIBRARY ──────────────────────── */
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:4px}
+.lib-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:8px}
+.lib-card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(192,67,31,.08)}
+.lib-card-del{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:4px;border:none;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .15s,background .15s,color .15s;box-shadow:0 1px 4px rgba(0,0,0,0.15);z-index:5}
+.lib-card:hover .lib-card-del{opacity:1}
+.lib-card-del:hover{background:#FF5F5720;color:#FF5F57}
+.lib-thumb{height:80px;background:var(--bg);border-radius:4px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.lib-thumb i{font-size:28px;color:var(--accent);opacity:.6}
+.lib-card .lib-name{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib-card .lib-meta{font-size:10.5px;color:var(--muted)}
+#lib-empty{text-align:center;padding:40px 20px;color:var(--muted)}
+#lib-empty i{font-size:40px;opacity:.2;display:block;margin-bottom:10px}
+
+/* ── SETTINGS ─────────────────────── */
+.settcard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0 16px;max-width:540px;margin-bottom:12px}
+.settrow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);gap:16px}
+.settrow:last-child{border-bottom:none}
+.settlbl{font-size:13px;font-weight:500}
+.settdesc{font-size:11px;color:var(--muted);margin-top:2px}
+.tog{width:34px;height:18px;background:var(--border);border-radius:9px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.tog.on{background:var(--accent)}
+.tog::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s}
+.tog.on::after{transform:translateX(16px)}
+#defconfirm{background:var(--acl);border-radius:7px;padding:11px 14px;font-size:12px;display:flex;align-items:center;gap:9px;color:#6B2410;margin-top:10px;max-width:540px;display:none}
+
+/* ── STATUS BAR ───────────────────── */
+#statusbar{height:22px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 13px;flex-shrink:0}
+#statusbar span{font-size:10.5px;color:var(--muted)}
+
+/* ── TOAST ────────────────────────── */
+#toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(10px);background:#17160F;color:#fff;padding:8px 16px;border-radius:7px;font-size:12px;opacity:0;pointer-events:none;transition:all .2s;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+body.dark #toast{background:#E8E4DC;color:#17160F}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── PROGRESS OVERLAY ─────────────── */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:999}
+#overlay.show{display:flex}
+#overlaybox{background:var(--surface);border-radius:10px;padding:28px 32px;width:360px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+#overlaybox h3{font-size:14px;font-weight:600;margin-bottom:6px}
+#overlaybox p{font-size:12px;color:var(--muted);margin-bottom:16px}
+.ovprog{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:8px}
+.ovfill{height:100%;background:var(--accent);border-radius:2px;transition:width .25s}
+#ovpct{font-size:11px;color:var(--muted)}
+
+/* ── MODAL ────────────────────────── */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;z-index:1000}
+#modal.show{display:flex}
+#modalbox{background:var(--surface);border-radius:10px;padding:22px 24px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,.14);border:1px solid var(--border)}
+#modalbox h2{font-size:14px;font-weight:600;margin-bottom:6px}
+#modalbox p{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+#libdelbox h2{font-size:14px;font-weight:600;margin-bottom:6px}
+#libdelbox p{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+.modalrow{display:flex;gap:8px;justify-content:flex-end}
+
+/* ── PDF.js text layer (selectable text) ── */
+.pdf-text-layer { position:absolute; top:0; left:0; overflow:hidden; opacity:1; line-height:1; user-select:none; -webkit-user-select:none; pointer-events:auto; z-index:2; }
+.pdf-text-layer span { color:transparent; position:absolute; white-space:pre; cursor:text; transform-origin:0% 0%; margin:0; padding:0; line-height:1; user-select:text; -webkit-user-select:text; }
+.pdf-text-layer span::selection { background:rgba(37,99,235,.4); color:transparent; }
+
+/* ── PDF.js loading state ─────────── */
+.pdfloading{display:flex;align-items:center;justify-content:center;height:140px;color:var(--muted);font-size:12px;gap:8px}
+
+/* PRINT / PDF capture: pages only — no chrome or toolbars */
+@media print{
+  #titlebar,#sidebar,#statusbar,#ctxbar,#editor-top,#editor-foot,
+  .page-break-line,.page-break-label,#toast,#modal,#print-preview{display:none!important}
+  .panel:not(#panel-editor){display:none!important}
+  #panel-editor{display:block!important;position:static!important;overflow:visible!important;padding:0!important}
+  #app,#body,#main,#panels{overflow:visible!important;height:auto!important;position:static!important;background:#fff!important}
+  #editor-scroll{padding:0!important;background:#fff!important;overflow:visible!important;display:block!important}
+  .editor-page-backdrop{background:#fff!important;box-shadow:none!important}
+  .editor-page{background:transparent!important;box-shadow:none!important}
+  .kaivo-page-gap{height:0!important;margin:0!important;padding:0!important;page-break-before:always;break-before:page}
+  #rich{color:#17160F!important;min-height:unset}
+  @page{margin:0}
+}
+html.print-capture-root,html.print-capture-root body{overflow:visible!important;height:auto!important;min-height:0!important}
+body.print-capture #titlebar,body.print-capture #sidebar,body.print-capture #statusbar,
+body.print-capture #ctxbar,body.print-capture #editor-top,body.print-capture #editor-foot,
+body.print-capture .page-break-line,body.print-capture .page-break-label,
+body.print-capture #toast,body.print-capture #modal,body.print-capture #print-preview{display:none!important}
+body.print-capture .panel:not(.on){display:none!important}
+body.print-capture #panel-editor{display:block!important;position:static!important;overflow:visible!important;padding:0!important;height:auto!important;min-height:0!important}
+body.print-capture #app,body.print-capture #body,body.print-capture #main,body.print-capture #panels{overflow:visible!important;height:auto!important;min-height:0!important;position:static!important;background:#fff!important}
+body.print-capture #editor-scroll{padding:0!important;background:#fff!important;overflow:visible!important;display:block!important;flex:unset!important;height:auto!important;max-height:none!important}
+body.print-capture #editor-wrap,body.print-capture #editor-page{height:auto!important;overflow:visible!important}
+body.print-capture #editor-page-backdrops{display:none!important}
+body.print-capture .editor-page-backdrop{background:#fff!important;box-shadow:none!important}
+body.print-capture .editor-page{background:transparent!important}
+body.print-capture .kaivo-page-gap{height:0!important;margin:0!important;padding:0!important;border:0!important;page-break-before:always!important;break-before:page!important}
+body.print-capture #rich{color:#17160F!important;overflow:visible!important}
+
+/* Print preview modal */
+#print-preview{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:1001;padding:20px}
+#print-preview.show{display:flex}
+#print-preview-box{background:var(--surface);border-radius:10px;border:1px solid var(--border);width:min(920px,96vw);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.2);overflow:hidden}
+#print-preview-header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+#print-preview-header h2{font-size:14px;font-weight:600;flex:1}
+#print-preview-header span{font-size:11px;color:var(--muted)}
+#print-preview-pages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;align-items:center;gap:16px;background:var(--bg)}
+.print-preview-page{background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.12);border-radius:2px;display:block;width:600px;max-width:100%;height:auto}
+#print-preview-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0}
+
+/* Styling for printing the print preview canvases */
+@media print {
+  body.printing-preview #titlebar,
+  body.printing-preview #sidebar,
+  body.printing-preview #statusbar,
+  body.printing-preview #ctxbar,
+  body.printing-preview .panel,
+  body.printing-preview #toast,
+  body.printing-preview #modal,
+  body.printing-preview #print-preview-header,
+  body.printing-preview #print-preview-footer {
+    display: none !important;
+  }
+  
+  body.printing-preview #app,
+  body.printing-preview #body,
+  body.printing-preview #main,
+  body.printing-preview #panels,
+  body.printing-preview #print-preview,
+  body.printing-preview #print-preview-box,
+  body.printing-preview #print-preview-pages {
+    display: block !important;
+    position: static !important;
+    overflow: visible !important;
+    background: #fff !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  body.printing-preview .print-preview-page {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TITLEBAR -->
+<div id="titlebar">
+  <div class="wbtns">
+    <button class="wb c" title="Close" onclick="winClose()"></button>
+    <button class="wb m" title="Minimise" onclick="winMin()"></button>
+    <button class="wb x" title="Maximise" onclick="winMax()"></button>
+  </div>
+  <div class="brand">
+    <img src="icon.png" alt="" onerror="this.style.display='none'">
+    Kaivo PDF
+  </div>
+  <div id="doctitle">No file open</div>
+  <div class="tbtns">
+    <button class="tbtn" title="Open file (Ctrl+O)" onclick="doOpenFile()"><i class="ti ti-folder-open"></i></button>
+    <button class="tbtn red" title="Close file" id="btn-close-file" onclick="closeFile()" style="display:none"><i class="ti ti-x"></i></button>
+    <button class="tbtn" title="Print (Ctrl+P)" onclick="doPrint()"><i class="ti ti-printer"></i></button>
+    <button class="tbtn" title="Show in Explorer" id="btn-show-folder" onclick="doShowFolder()" style="display:none"><i class="ti ti-folder-search"></i></button>
+  </div>
+</div>
+
+<div id="body">
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div>
+    <div class="sblabel">Workspace</div>
+    <div class="sbitem on" id="nav-viewer"  onclick="go('viewer')"><i class="ti ti-file-text"></i> PDF Viewer</div>
+    <div class="sbitem"   id="nav-editor"  onclick="go('editor')"><i class="ti ti-writing"></i> Text to PDF</div>
+    <div class="sbitem"   id="nav-convert" onclick="go('convert')"><i class="ti ti-transform"></i> Convert</div>
+    <div class="sbitem"   id="nav-rename"  onclick="go('rename')"><i class="ti ti-tag"></i> Rename & Save</div>
+    <div class="sbitem"   id="nav-library" onclick="go('library')"><i class="ti ti-books"></i> Library</div>
+  </div>
+  <div class="sbdiv"></div>
+  <div class="sblabel">Recent files</div>
+  <div id="sbreclist"></div>
+  <div id="sbbot">
+    <div class="sbdiv"></div>
+    <div class="sbitem" id="nav-settings" onclick="go('settings')"><i class="ti ti-settings"></i> Settings</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+<!-- CONTEXT TOOLBAR -->
+<div id="ctxbar">
+  <!-- Viewer toolbar -->
+  <div id="ctb-viewer" style="display:flex;align-items:center;gap:2px;width:100%">
+    <button class="ctxbtn" onclick="doOpenFile()"><i class="ti ti-folder-open"></i> Open</button>
+    <button class="ctxbtn" id="btn-close-v" onclick="closeFile()" style="display:none"><i class="ti ti-x"></i> Close</button>
+    <div class="ctxsep"></div>
+    <button class="ctxbtn" id="btn-prev" onclick="prevPage()" disabled><i class="ti ti-chevron-left"></i></button>
+    <span style="font-size:11.5px;color:var(--muted);padding:0 4px;white-space:nowrap" id="pageind">No file open</span>
+    <button class="ctxbtn" id="btn-next" onclick="nextPage()" disabled><i class="ti ti-chevron-right"></i></button>
+    <div class="ctxsep"></div>
+    <div class="zbar">
+      <button class="zbtn" onclick="chzoom(-10)" title="Zoom out">−</button>
+      <span id="zval">100%</span>
+      <button class="zbtn" onclick="chzoom(10)" title="Zoom in">+</button>
+    </div>
+    <div class="ctxsep"></div>
+    <button class="ctxbtn" onclick="doPrint()" id="btn-print" disabled><i class="ti ti-printer"></i> Print</button>
+    <button class="ctxbtn prim" onclick="doDownload()" id="btn-dl" disabled><i class="ti ti-download"></i> Download</button>
+  </div>
+  <!-- Editor toolbar -->
+  <div id="ctb-editor" style="display:none;align-items:center;gap:2px;width:100%">
+    <button class="ctxbtn" onclick="newDoc()"><i class="ti ti-plus"></i> New</button>
+    <button class="ctxbtn" onclick="insertImg()"><i class="ti ti-photo-plus"></i> Image</button>
+    <button class="ctxbtn" onclick="insertTbl()"><i class="ti ti-table-plus"></i> Table</button>
+    <div class="ctxsep"></div>
+    <span style="font-size:11px;color:var(--muted)">Paper:</span>
+    <select class="esel" id="paper-size" onchange="updateEditorLayout()" style="font-size:11px">
+      <option value="A4">A4</option>
+      <option value="A3">A3</option>
+      <option value="A5">A5</option>
+      <option value="Letter">Letter</option>
+      <option value="Legal">Legal</option>
+    </select>
+    <div class="ctxsep"></div>
+    <span style="font-size:11px;color:var(--muted)">Margins:</span>
+    <select class="esel" id="page-margins" onchange="updateEditorLayout()" style="font-size:11px">
+      <option value="Normal">Normal</option>
+      <option value="Narrow">Narrow</option>
+      <option value="Moderate">Moderate</option>
+      <option value="Wide">Wide</option>
+      <option value="Minimal">Minimal</option>
+    </select>
+    <div class="ctxsep"></div>
+    <button class="ctxbtn prim" onclick="exportPDF()"><i class="ti ti-file-export"></i> Export PDF</button>
+    <button class="ctxbtn" onclick="doPrint()"><i class="ti ti-printer"></i> Print</button>
+  </div>
+  <!-- Convert toolbar -->
+  <div id="ctb-convert" style="display:none;align-items:center;gap:2px;width:100%">
+    <span style="font-size:11.5px;color:var(--muted);padding:0 4px">Select a conversion type, then add your files</span>
+  </div>
+
+  <!-- Rename toolbar -->
+  <div id="ctb-rename" style="display:none;align-items:center;gap:2px;width:100%">
+    <span style="font-size:11.5px;color:var(--muted);padding:0 4px">Rename the open file or save a copy</span>
+  </div>
+  <!-- Library toolbar -->
+  <div id="ctb-library" style="display:none;align-items:center;gap:2px;width:100%">
+    <span style="font-size:11.5px;color:var(--muted);padding:0 4px">PDFs created or saved in Kaivo PDF</span>
+    <button class="ctxbtn" style="margin-left:auto" onclick="refreshLibrary()"><i class="ti ti-refresh"></i> Refresh</button>
+  </div>
+  <!-- Settings toolbar -->
+  <div id="ctb-settings" style="display:none;align-items:center;gap:2px;width:100%">
+    <button class="ctxbtn" onclick="closeSettings()"><i class="ti ti-arrow-left"></i> Back</button>
+    <div class="ctxsep"></div>
+    <span style="font-size:11.5px;color:var(--muted);padding:0 4px">App preferences & OS integrations</span>
+  </div>
+</div>
+
+<!-- PANELS -->
+<div id="panels">
+
+<!-- ═══ VIEWER ═══════════════════════════════════════════════ -->
+<div class="panel on" id="panel-viewer" style="padding:0">
+  <div id="viewer-wrap">
+    <div id="thumbstrip"></div>
+    <div id="viewer-main">
+    <div id="viewer-scroll">
+      <div id="viewer-empty">
+        <i class="ti ti-file-type-pdf"></i>
+        <p>No PDF open</p>
+        <p class="hint">Click Open or drag a PDF here</p>
+        <button class="btnp" style="margin-top:8px" onclick="doOpenFile()"><i class="ti ti-folder-open"></i> Open PDF</button>
+      </div>
+    </div>
+    <div id="viewer-pagenum">No file open</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TEXT EDITOR ══════════════════════════════════════════ -->
+<div class="panel" id="panel-editor">
+  <div id="editor-top">
+    <div id="editor-toolbar" onmousedown="event.preventDefault()">
+      <select class="esel" id="ef" onchange="applyFont()" title="Font family">
+        <option value="Georgia,serif">Georgia</option>
+        <option value="Inter,sans-serif">Inter</option>
+        <option value="Arial,sans-serif">Arial</option>
+        <option value="'Times New Roman',serif">Times New Roman</option>
+        <option value="'Courier New',monospace">Courier New</option>
+        <option value="Verdana,sans-serif">Verdana</option>
+        <option value="Tahoma,sans-serif">Tahoma</option>
+      </select>
+      <input type="number" class="enum" id="efs" value="14" min="8" max="96" onchange="applyFont()" title="Font size">
+      <div class="esep"></div>
+      <button class="ebtn" id="eb-bold"         onmousedown="event.preventDefault();efx('bold')"          title="Bold"><b>B</b></button>
+      <button class="ebtn" id="eb-italic"        onmousedown="event.preventDefault();efx('italic')"        title="Italic"><i>I</i></button>
+      <button class="ebtn" id="eb-underline"     onmousedown="event.preventDefault();efx('underline')"     title="Underline"><u>U</u></button>
+      <button class="ebtn" id="eb-strikeThrough" onmousedown="event.preventDefault();efx('strikeThrough')" title="Strikethrough"><s>S</s></button>
+      <div class="esep"></div>
+      <button class="ebtn" onmousedown="event.preventDefault();document.execCommand('justifyLeft')"   title="Left"><i class="ti ti-align-left"></i></button>
+      <button class="ebtn" onmousedown="event.preventDefault();document.execCommand('justifyCenter')" title="Centre"><i class="ti ti-align-center"></i></button>
+      <button class="ebtn" onmousedown="event.preventDefault();document.execCommand('justifyRight')"  title="Right"><i class="ti ti-align-right"></i></button>
+      <button class="ebtn" onmousedown="event.preventDefault();document.execCommand('justifyFull')"   title="Justify"><i class="ti ti-align-justified"></i></button>
+      <div class="esep"></div>
+      <button class="ebtn" onmousedown="event.preventDefault();document.execCommand('insertUnorderedList')" title="Bullets"><i class="ti ti-list"></i></button>
+      <button class="ebtn" onmousedown="event.preventDefault();document.execCommand('insertOrderedList')"   title="Numbered"><i class="ti ti-list-numbers"></i></button>
+      <button class="ebtn" onmousedown="event.preventDefault();document.execCommand('outdent')" title="Outdent"><i class="ti ti-indent-decrease"></i></button>
+      <button class="ebtn" onmousedown="event.preventDefault();document.execCommand('indent')"  title="Indent"><i class="ti ti-indent-increase"></i></button>
+      <div class="esep"></div>
+      <div class="cdot on" style="background:#17160F" onmousedown="event.preventDefault();setcol('#17160F',this)" title="Black"></div>
+      <div class="cdot"    style="background:#C0431F" onmousedown="event.preventDefault();setcol('#C0431F',this)" title="Red"></div>
+      <div class="cdot"    style="background:#1A5FA8" onmousedown="event.preventDefault();setcol('#1A5FA8',this)" title="Blue"></div>
+      <div class="cdot"    style="background:#0F6E54" onmousedown="event.preventDefault();setcol('#0F6E54',this)" title="Green"></div>
+      <div class="cdot"    style="background:#7C74DC" onmousedown="event.preventDefault();setcol('#7C74DC',this)" title="Purple"></div>
+      <div class="cdot"    style="background:#B87B15" onmousedown="event.preventDefault();setcol('#B87B15',this)" title="Amber"></div>
+      <div class="esep"></div>
+      <button class="ebtn" onmousedown="event.preventDefault();document.execCommand('undo')" title="Undo"><i class="ti ti-arrow-back-up"></i></button>
+      <button class="ebtn" onmousedown="event.preventDefault();document.execCommand('redo')" title="Redo"><i class="ti ti-arrow-forward-up"></i></button>
+      <button class="ebtn" onclick="clearEd()" title="Clear all" style="margin-left:auto;color:var(--muted)"><i class="ti ti-trash"></i></button>
+    </div>
+  </div>
+  <div id="editor-scroll">
+    <div id="editor-wrap">
+      <div id="editor-page-backdrops" aria-hidden="true"></div>
+      <div class="editor-page" id="editor-page">
+        <div id="rich" contenteditable="true" spellcheck="true" tabindex="0"><p>Start typing your document here…</p></div>
+      </div>
+    </div>
+  </div>
+  <div id="editor-foot">
+    <i class="ti ti-file-type-pdf" style="font-size:16px;color:var(--muted)"></i>
+    <input class="finp" type="text" id="pdfname" value="My Document" placeholder="File name…" style="width:180px">
+    <span class="lbl">.pdf</span>
+    <button class="btnp" onclick="exportPDF()"><i class="ti ti-download"></i> Export PDF</button>
+    <button class="btng" onclick="doPrint()"><i class="ti ti-printer"></i> Print</button>
+    <span id="autosave-status"></span>
+  </div>
+</div>
+
+<!-- ═══ CONVERT ══════════════════════════════════════════════ -->
+<div class="panel" id="panel-convert">
+  <div class="ph"><h1>Convert</h1><span>Transform files to and from PDF — all free</span></div>
+  <div class="cvgrid">
+    <div class="cvc" onclick="openConv('Image → PDF','jpg,jpeg,png,webp,bmp,tiff','Add images below — unlimited supported',true)">
+      <div class="cvico"><i class="ti ti-photo-up"></i></div>
+      <h3>Image to PDF</h3><p>Combine one or more images into a PDF document.</p>
+    </div>
+    <div class="cvc" onclick="openConv('PDF → Image','pdf','Each page exported as PNG',false)">
+      <div class="cvico"><i class="ti ti-photo-down"></i></div>
+      <h3>PDF to Image</h3><p>Export each PDF page as a high-quality image file.</p>
+    </div>
+    <div class="cvc" onclick="openConv('Merge PDFs','pdf','Select 2 or more PDFs to combine',true)">
+      <div class="cvico"><i class="ti ti-files"></i></div>
+      <h3>Merge PDFs</h3><p>Combine multiple PDFs into one document in order.</p>
+    </div>
+    <div class="cvc" onclick="openConv('Split PDF','pdf','Split one PDF into separate files',false)">
+      <div class="cvico"><i class="ti ti-scissors"></i></div>
+      <h3>Split PDF</h3><p>Separate pages into individual PDF files.</p>
+    </div>
+    <div class="cvc" onclick="openConv('Compress PDF','pdf','Reduce size while keeping quality',false)">
+      <div class="cvico"><i class="ti ti-file-zip"></i></div>
+      <h3>Compress PDF</h3><p>Reduce file size without sacrificing visual quality.</p>
+    </div>
+    <div class="cvc" onclick="openConv('Excel → PDF','xlsx,xls,csv','.xlsx, .xls and .csv files',true)">
+      <div class="cvico"><i class="ti ti-file-spreadsheet"></i></div>
+      <h3>Excel to PDF</h3><p>Convert spreadsheets into clean PDF documents.</p>
+    </div>
+  </div>
+
+  <div id="convdrop">
+    <div class="convtop">
+      <span class="convtag" id="convlabel">Image → PDF</span>
+      <span style="font-size:11px;color:var(--muted)" id="convhint"></span>
+      <button class="btng" style="margin-left:auto;padding:4px 10px;font-size:11.5px" onclick="closeConv()"><i class="ti ti-x"></i> Cancel</button>
+    </div>
+    <div class="dropz" id="convdropz" onclick="pickConvFiles()"
+         ondragover="dzDragOver(event,'convdropz')" ondragleave="dzDragLeave('convdropz')" ondrop="dzDrop(event,'convdropz')">
+      <i class="ti ti-cloud-upload"></i>
+      <p><strong>Drop files here</strong> or click to browse</p>
+      <p id="convdrophint" style="margin-top:3px;font-size:10.5px"></p>
+    </div>
+    <div id="filelist"></div>
+    <div class="saverow">
+      <i class="ti ti-file-type-pdf" style="font-size:16px;color:var(--muted)"></i>
+      <input class="finp" type="text" id="convname" placeholder="Output file name…" style="flex:1">
+      <span class="lbl" id="convext">.pdf</span>
+      <button class="btnp" onclick="runConversion()"><i class="ti ti-check"></i> Convert & Save</button>
+    </div>
+    <div id="progwrap" style="display:none">
+      <i class="ti ti-loader-2" style="color:var(--accent);font-size:18px"></i>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:500" id="progmsg">Processing…</div>
+        <div class="progbar"><div class="progfill" id="progfill"></div></div>
+      </div>
+      <span style="font-size:11px;color:var(--accent);min-width:28px;text-align:right" id="progpct">0%</span>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ═══ RENAME & SAVE ═════════════════════════════════════════ -->
+<div class="panel" id="panel-rename">
+  <div class="ph"><h1>Rename & Save</h1><span>Manage your file's name and location</span></div>
+  <div class="rnbox">
+    <label>Current file</label>
+    <div class="currfile"><i class="ti ti-file-type-pdf" style="color:var(--accent);font-size:14px"></i><span id="currfn">No file open</span></div>
+    <label>New file name</label>
+    <div style="display:flex;gap:7px;align-items:center">
+      <input class="finp" type="text" id="rninput" placeholder="Enter new name…" style="flex:1">
+      <span class="lbl">.pdf</span>
+    </div>
+    <button class="btnp" style="margin-top:10px;width:100%" onclick="applyRename()"><i class="ti ti-tag"></i> Apply Rename</button>
+  </div>
+  <div class="rnbox">
+    <label>Save a copy</label>
+    <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+      <input class="finp" type="text" id="copyname" placeholder="Copy file name…" style="flex:1">
+      <span class="lbl">.pdf</span>
+    </div>
+    <div style="display:flex;gap:7px">
+      <button class="btng" style="flex:1" onclick="saveCopyDownloads()"><i class="ti ti-download"></i> Save to Downloads</button>
+      <button class="btng" style="flex:1" onclick="saveCopyPicker()"><i class="ti ti-folder-open"></i> Choose folder</button>
+    </div>
+  </div>
+  <div class="rnbox">
+    <label>Export format</label>
+    <div class="expgrid">
+      <button class="btng" onclick="exportAs('flat')"><i class="ti ti-file-type-pdf"></i> Flat PDF</button>
+      <button class="btng" onclick="exportAs('pdfa')"><i class="ti ti-archive"></i> PDF/A (archive)</button>
+      <button class="btng" onclick="exportAs('print')"><i class="ti ti-printer"></i> Print-ready PDF</button>
+      <button class="btng" onclick="exportAs('compressed')"><i class="ti ti-file-zip"></i> Compressed PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LIBRARY ═══════════════════════════════════════════════ -->
+<div class="panel" id="panel-library">
+  <div class="ph"><h1>Library</h1><span>PDFs you've created or saved with Kaivo PDF</span></div>
+  <div id="lib-empty" style="display:none">
+    <i class="ti ti-books"></i>
+    <p>No PDFs saved yet</p>
+    <p style="font-size:11px;margin-top:4px">Export, convert, or save a PDF to see it here</p>
+  </div>
+  <div class="lib-grid" id="lib-grid"></div>
+</div>
+
+<!-- ═══ SETTINGS ═════════════════════════════════════════════ -->
+<div class="panel" id="panel-settings">
+  <div class="ph"><h1>Settings</h1><span>Preferences and OS integrations</span></div>
+
+  <div class="settcard">
+    <div class="settrow">
+      <div><div class="settlbl">Dark theme</div>
+        <div class="settdesc">Switch to a dark colour scheme</div></div>
+      <button class="tog" id="tog-dark" onclick="toggleDark(this)"></button>
+    </div>
+    <div class="settrow">
+      <div><div class="settlbl">Set as default PDF reader</div>
+        <div class="settdesc">All .pdf files will open with Kaivo PDF</div></div>
+      <button class="tog" id="tog-default" onclick="toggleDefault(this)"></button>
+    </div>
+    <div class="settrow">
+      <div><div class="settlbl">Apply Kaivo icon to all PDF files</div>
+        <div class="settdesc">Every .pdf file in Explorer will show the Kaivo PDF icon</div></div>
+      <button class="tog" id="tog-icon" onclick="toggleIcon(this)"></button>
+    </div>
+    <div class="settrow">
+      <div><div class="settlbl">Reopen last file on launch</div>
+        <div class="settdesc">Automatically open the last viewed PDF when the app starts</div></div>
+      <button class="tog" id="tog-reopen" onclick="saveTog(this,'reopenLast')"></button>
+    </div>
+    <div class="settrow">
+      <div><div class="settlbl">Auto-save editor drafts</div>
+        <div class="settdesc">Save editor content every 2 minutes automatically</div></div>
+      <button class="tog on" id="tog-autosave" onclick="saveTog(this,'autoSave')"></button>
+    </div>
+  </div>
+
+  <div class="settcard">
+    <div class="settrow">
+      <div><div class="settlbl">Default zoom</div></div>
+      <select class="esel" id="sel-zoom" onchange="window.kaivo&&kaivo.setSetting('zoom',parseInt(this.value))">
+        <option value="75">75%</option>
+        <option value="100" selected>100%</option>
+        <option value="125">125%</option>
+        <option value="150">150%</option>
+        <option value="200">200%</option>
+      </select>
+    </div>
+    <div class="settrow">
+      <div><div class="settlbl">Default save folder</div><div class="settdesc" id="save-folder-label">Downloads</div></div>
+      <button class="btng" style="font-size:11.5px" onclick="changeSaveFolder()"><i class="ti ti-folder-open"></i> Change</button>
+    </div>
+
+    <div class="settrow">
+      <div><div class="settlbl">PDF export quality</div></div>
+      <select class="esel" id="sel-quality" onchange="window.kaivo&&kaivo.setSetting('exportQuality',this.value)">
+        <option value="standard">Standard</option>
+        <option value="high" selected>High</option>
+        <option value="maximum">Maximum</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="settcard">
+    <div class="settrow">
+      <div><div class="settlbl">Clear recent files list</div></div>
+      <button class="btng" style="font-size:11.5px" onclick="clearRecent()"><i class="ti ti-trash"></i> Clear</button>
+    </div>
+    <div class="settrow">
+      <div><div class="settlbl" style="color:var(--accent)">Reset app data</div>
+        <div class="settdesc">Erase all settings, recent files list, library data, and unsaved editor drafts</div></div>
+      <button class="btnp" style="font-size:11.5px;background:var(--accent)" onclick="resetAppData()"><i class="ti ti-trash"></i> Reset Data</button>
+    </div>
+    <div class="settrow">
+      <div><div class="settlbl">App version</div><div class="settdesc" id="ver-label">v1.0.0</div></div>
+      <button class="btng" style="font-size:11.5px" onclick="toast('You are on the latest version')"><i class="ti ti-refresh"></i> Check updates</button>
+    </div>
+  </div>
+
+  <div id="defconfirm" style="display:none;background:var(--acl);border-radius:7px;padding:11px 14px;font-size:12px;display:none;align-items:center;gap:9px;color:#6B2410;margin-top:10px;max-width:540px">
+    <i class="ti ti-circle-check" style="font-size:16px;flex-shrink:0"></i>
+    Kaivo PDF is now your default PDF reader. All PDF files will display the Kaivo icon.
+  </div>
+  <div style="margin-top:14px;font-size:11px;color:var(--muted)">Kaivo PDF v1.0.0 · All features free · No ads · No subscriptions</div>
+  <div style="margin-top:8px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span>Made by Sozu💕</span>
+    <span style="color:var(--border)">·</span>
+    <a href="mailto:soamyasharma@outlook.com" style="color:var(--muted);text-decoration:none" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">soamyasharma@outlook.com</a>
+  </div>
+</div>
+
+</div><!-- /panels -->
+</div><!-- /main -->
+</div><!-- /body -->
+
+<div id="statusbar">
+  <span id="sl">Ready</span>
+  <span id="sr">Kaivo PDF v1.0.0</span>
+</div>
+</div><!-- /app -->
+
+<!-- Overlay progress -->
+<div id="overlay">
+  <div id="overlaybox">
+    <h3 id="ovtitle">Processing…</h3>
+    <p id="ovmsg">Please wait</p>
+    <div class="ovprog"><div class="ovfill" id="ovfill"></div></div>
+    <div id="ovpct" style="font-size:11px;color:var(--muted)">0%</div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div id="modal">
+  <div id="modalbox">
+    <h2 id="modal-title">Confirm</h2>
+    <p id="modal-body">Are you sure?</p>
+    <div class="modalrow">
+      <button class="btng" onclick="modalCancel()">Cancel</button>
+      <button class="btnp" id="modal-ok" onclick="modalOK()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Library deletion modal -->
+<div id="lib-del-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;z-index:1000">
+  <div id="libdelbox" style="background:var(--surface);border-radius:10px;padding:22px 24px;width:400px;box-shadow:0 8px 32px rgba(0,0,0,.14);border:1px solid var(--border)">
+    <h2>Delete File</h2>
+    <p id="lib-del-msg" style="word-break:break-all;margin-bottom:12px;font-size:12px"></p>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:14px">Choose how you want to delete this file:</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <button class="btng" style="justify-content:flex-start;padding:8px 10px;display:flex;align-items:center;width:100%" onclick="execLibDelete('remove')">
+        <i class="ti ti-bookmark-off" style="color:var(--muted);font-size:16px"></i>
+        <div style="text-align:left;margin-left:8px">
+          <div style="font-weight:600;font-size:12px">Remove from Library</div>
+          <div style="font-size:10px;color:var(--muted)">Only removes it from this view, keeps file on disk</div>
+        </div>
+      </button>
+      <button class="btng" style="justify-content:flex-start;padding:8px 10px;display:flex;align-items:center;width:100%" onclick="execLibDelete('recycle')">
+        <i class="ti ti-trash" style="color:var(--accent);font-size:16px"></i>
+        <div style="text-align:left;margin-left:8px">
+          <div style="font-weight:600;font-size:12px">Move to Recycle Bin</div>
+          <div style="font-size:10px;color:var(--muted)">Moves the physical file to the Recycle Bin</div>
+        </div>
+      </button>
+      <button class="btng" style="justify-content:flex-start;padding:8px 10px;display:flex;align-items:center;width:100%;border-color:#FF5F5730" onclick="execLibDelete('permanent')">
+        <i class="ti ti-alert-triangle" style="color:#FF5F57;font-size:16px"></i>
+        <div style="text-align:left;margin-left:8px">
+          <div style="font-weight:600;font-size:12px;color:#FF5F57">Delete Permanently</div>
+          <div style="font-size:10px;color:var(--muted)">Permanently deletes the file from your computer</div>
+        </div>
+      </button>
+    </div>
+    <div class="modalrow">
+      <button class="btng" onclick="closeLibDelModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="print-preview">
+  <div id="print-preview-box">
+    <div id="print-preview-header">
+      <h2>Print Preview</h2>
+      <span>Kaivo PDF</span>
+      <button class="tbtn" onclick="closePrintPreview()" title="Close"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="print-preview-pages"></div>
+    <div id="print-preview-footer">
+      <button class="btng" onclick="closePrintPreview()">Cancel</button>
+      <button class="btnp" onclick="executePrint()"><i class="ti ti-printer"></i> Print</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- pdf.js for real PDF rendering -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<!-- jsPDF for creating real PDFs from images/merging -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<script>
+'use strict';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+const IS_E = typeof window.kaivo !== 'undefined';
+
+if (IS_E) {
+  const originalLog = console.log;
+  console.log = (...args) => {
+    const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+    kaivo.log(msg);
+    originalLog(...args);
+  };
+  const originalError = console.error;
+  console.error = (...args) => {
+    const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+    kaivo.log('[ERROR] ' + msg);
+    originalError(...args);
+  };
+  window.addEventListener('error', (e) => {
+    kaivo.log('[UNHANDLED ERROR] ' + e.message + ' at ' + e.filename + ':' + e.lineno);
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    kaivo.log('[UNHANDLED REJECTION] ' + String(e.reason));
+  });
+}
+
+// ── STATE ─────────────────────────────────────────────────
+let pdfDoc       = null;
+let curPage      = 1;
+let totalPages   = 0;
+let zoom         = 1.0;
+let openedPath   = null;
+let openedName   = '';
+let openedData   = null;
+
+let convMode     = null;
+let convFiles    = [];
+let convMulti    = false;
+let autoSaveTimer= null;
+let modalCb      = null;
+let darkMode     = false;
+
+// Paper sizes in mm
+const PAPER_SIZES = {
+  A4:     { w: 210, h: 297 },
+  A3:     { w: 297, h: 420 },
+  A5:     { w: 148, h: 210 },
+  Letter: { w: 216, h: 279 },
+  Legal:  { w: 216, h: 356 },
+};
+
+// Page margins in mm (content inset inside each page)
+const MARGIN_PRESETS = {
+  Normal:   { top: 25, right: 20, bottom: 25, left: 20 },
+  Narrow:   { top: 12.7, right: 12.7, bottom: 12.7, left: 12.7 },
+  Moderate: { top: 19, right: 19, bottom: 19, left: 19 },
+  Wide:     { top: 38, right: 38, bottom: 38, left: 38 },
+  Minimal:  { top: 6, right: 6, bottom: 6, left: 6 },
+};
+
+const EDITOR_PAGE_GAP = 24; // px space between stacked pages in preview
+
+function bufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunk = 8192;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+// ── DARK MODE ─────────────────────────────────────────────
+function applyDark(on) {
+  darkMode = on;
+  document.body.classList.toggle('dark', on);
+  const btn = document.getElementById('tog-dark');
+  if (btn) { btn.classList.toggle('on', on); }
+}
+
+function toggleDark(btn) {
+  btn.classList.toggle('on');
+  const on = btn.classList.contains('on');
+  applyDark(on);
+  if (IS_E) kaivo.setSetting('darkMode', on);
+}
+
+// ── WINDOW CONTROLS ───────────────────────────────────────
+function winMin()  { IS_E && kaivo.minimize(); }
+function winMax()  { IS_E && kaivo.maximize(); }
+function winClose(){ IS_E ? kaivo.close() : window.close(); }
+
+// ── NAVIGATION ────────────────────────────────────────────
+const ALL_PANELS = ['viewer','editor','convert','rename','library','settings'];
+let panelBeforeSettings = 'viewer';
+function go(name) {
+  if (name !== 'settings' && ALL_PANELS.includes(name)) panelBeforeSettings = name;
+  ALL_PANELS.forEach(n => {
+    document.getElementById('panel-'+n).classList.remove('on');
+    const nb = document.getElementById('nav-'+n); if(nb) nb.classList.remove('on');
+    const ctb = document.getElementById('ctb-'+n); if(ctb) ctb.style.display='none';
+  });
+  document.getElementById('panel-'+name).classList.add('on');
+  const nv = document.getElementById('nav-'+name); if(nv) nv.classList.add('on');
+  const cb = document.getElementById('ctb-'+name); if(cb) cb.style.display='flex';
+  document.getElementById('sl').textContent = {
+    viewer:'PDF Viewer', editor:'Text to PDF editor',
+    convert:'Convert tools',
+    rename:'Rename & Save', library:'Library', settings:'Settings'
+  }[name]||'';
+  if (name === 'library') refreshLibrary();
+  if (name === 'editor') {
+    requestAnimationFrame(() => {
+      updateEditorLayout();
+      const r = document.getElementById('rich');
+      if (r) {
+        r.style.color = '#17160F';
+        r.focus();
+        // Place caret at end if no selection exists
+        try {
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount === 0) {
+            const rng = document.createRange();
+            rng.selectNodeContents(r);
+            rng.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(rng);
+          }
+        } catch(e) {}
+      }
+    });
+  }
+}
+function closeSettings() { go(panelBeforeSettings); }
+
+// ── OPEN FILE ─────────────────────────────────────────────
+async function doOpenFile() {
+  if (IS_E) {
+    const r = await kaivo.openFile([
+      { name:'PDF Files', extensions:['pdf'] },
+      { name:'Images', extensions:['jpg','jpeg','png','webp','bmp'] },
+      { name:'All Files', extensions:['*'] }
+    ]);
+    if (!r || r.error) return;
+    openedPath = r.filePath;
+    const bytes = Uint8Array.from(atob(r.data), c=>c.charCodeAt(0));
+    await loadPDF(bytes.buffer, r.fileName, r.filePath);
+    refreshRecent();
+  } else {
+    const inp = document.createElement('input');
+    inp.type='file'; inp.accept='.pdf,.jpg,.jpeg,.png,.webp';
+    inp.onchange = async e => {
+      const f = e.target.files[0]; if(!f) return;
+      const buf = await f.arrayBuffer();
+      await loadPDF(buf, f.name, null);
+    };
+    inp.click();
+  }
+}
+
+// ── CLOSE FILE ────────────────────────────────────────────
+function closeFile() {
+  pdfDoc = null; totalPages = 0; curPage = 1;
+  openedPath = null; openedName = ''; openedData = null;
+  document.getElementById('doctitle').textContent = 'No file open';
+  document.getElementById('currfn').textContent   = 'No file open';
+  document.getElementById('viewer-empty').style.display = 'flex';
+  document.getElementById('thumbstrip').innerHTML = '';
+  document.getElementById('viewer-scroll').querySelectorAll('.pdfpage').forEach(p=>p.remove());
+  updatePageIndicator();
+  setViewerBtns(false);
+  document.getElementById('btn-close-file').style.display = 'none';
+  document.getElementById('btn-close-v').style.display    = 'none';
+  document.getElementById('btn-show-folder').style.display = 'none';
+  toast('File closed');
+}
+
+// ── LOAD PDF ──────────────────────────────────────────────
+async function loadPDF(buffer, name, filePath) {
+  try {
+    openedData = buffer;
+    openedPath = filePath;
+    openedName = name;
+
+    document.getElementById('doctitle').textContent = name;
+    document.getElementById('currfn').textContent   = name;
+    document.getElementById('rninput').value = name.replace(/\.pdf$/i,'');
+    document.getElementById('copyname').value = name.replace(/\.pdf$/i,'') + ' — Copy';
+    document.getElementById('btn-show-folder').style.display = filePath ? 'flex' : 'none';
+    document.getElementById('btn-close-file').style.display = 'flex';
+    document.getElementById('btn-close-v').style.display    = 'flex';
+
+    setViewerBtns(false);
+    go('viewer');
+
+    document.getElementById('viewer-empty').style.display = 'none';
+    document.getElementById('thumbstrip').innerHTML = '';
+    const vs = document.getElementById('viewer-scroll');
+    vs.querySelectorAll('.pdfpage').forEach(p=>p.remove());
+
+    const loadEl = document.createElement('div');
+    loadEl.className='pdfloading'; loadEl.id='pdfloading';
+    loadEl.innerHTML='<i class="ti ti-loader-2"></i> Loading PDF…';
+    vs.appendChild(loadEl);
+
+    pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise;
+    totalPages = pdfDoc.numPages;
+    curPage = 1;
+
+    const le = document.getElementById('pdfloading');
+    if(le) le.remove();
+
+
+
+    for (let i = 1; i <= totalPages; i++) {
+      await renderPage(i);
+      addThumb(i);
+    }
+
+    setViewerBtns(true);
+    updatePageIndicator();
+    vs.scrollTop = 0;
+    highlightThumb(1);
+    toast('Opened "'+name+'"');
+    if(IS_E) kaivo.setSetting('lastFile', filePath || '');
+  } catch(err) {
+    toast('Could not open file: '+err.message);
+    document.getElementById('viewer-empty').style.display='flex';
+  }
+}
+
+
+async function renderPage(pageNum) {
+  const page = await pdfDoc.getPage(pageNum);
+  const dpr = window.devicePixelRatio || 1;
+  const renderScale = zoom * dpr;
+  const vp    = page.getViewport({ scale: zoom });
+  const hiVP  = page.getViewport({ scale: renderScale });
+
+  const wrap = document.createElement('div');
+  wrap.className = 'pdfpage';
+  wrap.id = 'pdfpage-'+pageNum;
+  wrap.dataset.page = pageNum;
+  wrap.style.width  = Math.round(vp.width)  + 'px';
+  wrap.style.height = Math.round(vp.height) + 'px';
+  wrap.style.position = 'relative';
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = Math.round(hiVP.width);
+  canvas.height = Math.round(hiVP.height);
+  canvas.style.width  = Math.round(vp.width)  + 'px';
+  canvas.style.height = Math.round(vp.height) + 'px';
+  canvas.style.display = 'block';
+
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport: hiVP }).promise;
+  wrap.appendChild(canvas);
+
+  // --- Selectable text layer (pdf.js native text layer) ---
+  try {
+    let hasNativeText = false;
+    const textContent = await page.getTextContent();
+    if (textContent && textContent.items && textContent.items.length > 0) {
+      hasNativeText = true;
+      const textLayerDiv = document.createElement('div');
+      textLayerDiv.className = 'pdf-text-layer';
+      textLayerDiv.style.cssText = [
+        'position:absolute', 'top:0', 'left:0',
+        'width:' + Math.round(vp.width) + 'px',
+        'height:' + Math.round(vp.height) + 'px',
+        'overflow:hidden', 'line-height:1',
+        'user-select:none', '-webkit-user-select:none',
+        'pointer-events:auto', 'z-index:2'
+      ].join(';');
+      wrap.appendChild(textLayerDiv);
+      const renderTask = pdfjsLib.renderTextLayer({
+        textContentSource: textContent,
+        container: textLayerDiv,
+        viewport: vp,
+        textDivs: []
+      });
+      // Await the render so spans are placed before we continue
+      if (renderTask && typeof renderTask.promise !== 'undefined') {
+        await renderTask.promise.catch(() => {});
+      } else if (renderTask && typeof renderTask.then === 'function') {
+        await renderTask.catch(() => {});
+      }
+    }
+
+
+  } catch(e) {}
+  // --- End text layer ---
+
+  wrap.addEventListener('click', () => scrollToPage(pageNum));
+  document.getElementById('viewer-scroll').appendChild(wrap);
+}
+
+function addThumb(pageNum) {
+  const t = document.createElement('div');
+  t.className = 'thumb' + (pageNum===1?' on':'');
+  t.id = 'thumb-'+pageNum;
+  t.innerHTML = `<div class="thumbimg"><i class="ti ti-file-text"></i></div>${pageNum}`;
+  t.onclick = () => scrollToPage(pageNum);
+
+  if(pdfDoc) {
+    pdfDoc.getPage(pageNum).then(page => {
+      const vp = page.getViewport({scale:0.12});
+      const c = document.createElement('canvas');
+      c.width=vp.width; c.height=vp.height;
+      c.style.width='100%'; c.style.height='100%';
+      page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise.then(()=>{
+        t.querySelector('.thumbimg').innerHTML='';
+        t.querySelector('.thumbimg').appendChild(c);
+      });
+    });
+  }
+  document.getElementById('thumbstrip').appendChild(t);
+}
+
+function highlightThumb(n) {
+  document.querySelectorAll('.thumb').forEach(t=>t.classList.remove('on'));
+  const th = document.getElementById('thumb-'+n);
+  if(th){ th.classList.add('on'); th.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+}
+
+function scrollToPage(n) {
+  curPage = n;
+  const el = document.getElementById('pdfpage-'+n);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  highlightThumb(n);
+  updatePageIndicator();
+}
+
+function updatePageIndicator() {
+  const text = pdfDoc ? 'Page '+curPage+' of '+totalPages : 'No file open';
+  document.getElementById('pageind').textContent = text;
+  const vp = document.getElementById('viewer-pagenum');
+  if (vp) vp.textContent = text;
+}
+
+function setViewerBtns(on) {
+  ['btn-prev','btn-next','btn-print','btn-dl'].forEach(id => {
+    const b = document.getElementById(id); if(b) b.disabled = !on;
+  });
+}
+
+document.getElementById('viewer-scroll').addEventListener('scroll', () => {
+  if (!pdfDoc) return;
+  const vs = document.getElementById('viewer-scroll');
+  const vsTop = vs.getBoundingClientRect().top;
+  const pages = vs.querySelectorAll('.pdfpage');
+  let closest = 1, minDist = Infinity;
+  pages.forEach(p => {
+    const dist = Math.abs(p.getBoundingClientRect().top - vsTop);
+    if(dist < minDist){ minDist=dist; closest=parseInt(p.dataset.page)||1; }
+  });
+  if(closest !== curPage){ curPage=closest; highlightThumb(curPage); updatePageIndicator(); }
+}, {passive:true});
+
+function prevPage() { if(curPage>1) scrollToPage(curPage-1); }
+function nextPage() { if(curPage<totalPages) scrollToPage(curPage+1); }
+
+function chzoom(delta) {
+  zoom = Math.max(0.3, Math.min(3, zoom + delta/100));
+  document.getElementById('zval').textContent = Math.round(zoom*100)+'%';
+  if(pdfDoc) reRenderAll();
+  if(IS_E) kaivo.setSetting('zoom', Math.round(zoom*100));
+}
+
+async function reRenderAll() {
+  const vs = document.getElementById('viewer-scroll');
+  vs.querySelectorAll('.pdfpage').forEach(p=>p.remove());
+  for(let i=1;i<=totalPages;i++) await renderPage(i);
+}
+
+// ── DOWNLOAD CURRENT PDF ──────────────────────────────────
+async function doDownload() {
+  if (!openedData) { toast('No file open'); return; }
+  if (IS_E) {
+    const savePath = await kaivo.saveFile({
+      defaultName: openedName,
+      filters:[{name:'PDF',extensions:['pdf']}]
+    });
+    if (!savePath) return;
+    const b64 = bufferToBase64(openedData);
+    const r = await kaivo.writeFile(savePath, b64);
+    if(r.success) toast('Saved to '+savePath.split(/[/\\]/).pop());
+    else toast('Save failed: '+r.error);
+  } else {
+    const blob = new Blob([openedData],{type:'application/pdf'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=openedName; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+}
+
+// ── PRINT / PDF CAPTURE ───────────────────────────────────
+let printPreviewData = null;
+
+async function setPrintCapture(on) {
+  let styleEl = document.getElementById('print-capture-style');
+  if (on) {
+    document.documentElement.classList.add('print-capture-root');
+    document.body.classList.add('print-capture');
+    document.querySelectorAll('.page-break-line').forEach(b => { b.style.display = 'none'; });
+    updateEditorPages();
+    const scroll = document.getElementById('editor-scroll');
+    if (scroll) scroll.scrollTop = 0;
+    const { size } = getEditorConfig();
+    const ps = PAPER_SIZES[size] || PAPER_SIZES.A4;
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'print-capture-style';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `@page{size:${ps.w}mm ${ps.h}mm;margin:0}`;
+  } else {
+    document.documentElement.classList.remove('print-capture-root');
+    document.body.classList.remove('print-capture');
+    if (styleEl) styleEl.textContent = '';
+    document.querySelectorAll('.page-break-line').forEach(b => { b.style.display = ''; });
+  }
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  if (on) await new Promise(r => setTimeout(r, 80));
+}
+
+async function showPrintPreview(base64) {
+  printPreviewData = base64;
+  const container = document.getElementById('print-preview-pages');
+  container.innerHTML = '<div class="pdfloading">Loading preview…</div>';
+  document.getElementById('print-preview').classList.add('show');
+
+  try {
+    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const doc = await pdfjsLib.getDocument({ data: bytes }).promise;
+    container.innerHTML = '';
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const viewport = page.getViewport({ scale: 3.0 });
+      const canvas = document.createElement('canvas');
+      canvas.className = 'print-preview-page';
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      container.appendChild(canvas);
+    }
+  } catch (err) {
+    container.innerHTML = '<div class="pdfloading">Preview failed: ' + err.message + '</div>';
+  }
+}
+
+function closePrintPreview() {
+  document.getElementById('print-preview').classList.remove('show');
+  printPreviewData = null;
+}
+
+async function executePrint() {
+  if (!printPreviewData) return;
+  
+  // Add printing class to body to isolate the preview pages for printer
+  document.body.classList.add('printing-preview');
+  
+  // Open the standard system print dialog
+  window.print();
+  
+  // Remove printing class to restore normal UI view
+  document.body.classList.remove('printing-preview');
+  
+  toast('Sent to printer');
+  closePrintPreview();
+}
+
+async function doPrint() {
+  if (!IS_E) { window.print(); return; }
+
+  const isEditor = document.getElementById('panel-editor').classList.contains('on');
+  let pdfB64 = null;
+
+  try {
+    if (isEditor) {
+      toast('Preparing print preview…');
+      await setPrintCapture(true);
+      try {
+        const { size } = getEditorConfig();
+        const r = await kaivo.generatePrintPdf(size);
+        if (!r || !r.success) { toast('Print failed: ' + (r && r.error ? r.error : 'PDF generation failed')); return; }
+        pdfB64 = r.data;
+      } finally {
+        await setPrintCapture(false);
+      }
+    } else if (openedPath) {
+      toast('Loading file for print…');
+      const r = await kaivo.readFile(openedPath);
+      if (!r || !r.success) { toast('Could not read file for printing'); return; }
+      pdfB64 = r.data;
+    } else if (openedData) {
+      pdfB64 = bufferToBase64(openedData);
+    } else {
+      toast('Nothing to print — open a PDF first');
+      return;
+    }
+
+    if (!pdfB64) { toast('No printable data'); return; }
+    await showPrintPreview(pdfB64);
+  } catch(err) {
+    toast('Print error: ' + err.message);
+    await setPrintCapture(false).catch(()=>{});
+  }
+}
+
+// ── SHOW IN FOLDER ────────────────────────────────────────
+async function doShowFolder() {
+  if(IS_E && openedPath) await kaivo.showInFolder(openedPath);
+}
+
+// ── RECENT FILES ──────────────────────────────────────────
+async function refreshRecent() {
+  const data = IS_E ? await kaivo.getRecent() : { recent: [], pinned: [] };
+  const recentList = data.recent || [];
+  const pinnedList = data.pinned || [];
+  
+  const combined = [
+    ...pinnedList.map(fp => ({ path: fp, pinned: true })),
+    ...recentList.filter(fp => !pinnedList.includes(fp)).map(fp => ({ path: fp, pinned: false }))
+  ];
+  
+  const el = document.getElementById('sbreclist');
+  el.innerHTML='';
+  if(!combined.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--muted);padding:4px 16px">No recent files</div>';
+    return;
+  }
+  
+  combined.forEach(item => {
+    const fp = item.path;
+    const name = fp.split(/[/\\]/).pop();
+    const d = document.createElement('div');
+    d.className = 'sbrec' + (item.pinned ? ' pinned' : '');
+    d.innerHTML = `
+      <i class="ti ti-file-type-pdf" style="flex-shrink:0"></i>
+      <span title="${fp}">${name}</span>
+      <div class="sbrec-actions">
+        <button class="sbrec-btn pin-btn${item.pinned ? ' pinned' : ''}" title="${item.pinned ? 'Unpin file' : 'Pin file'}">
+          <i class="ti ${item.pinned ? 'ti-pin-filled' : 'ti-pin'}"></i>
+        </button>
+        <button class="sbrec-btn del-btn" title="Remove from list">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+    `;
+    
+    d.onclick = async (e) => {
+      if (e.target.closest('.sbrec-btn')) return;
+      if(IS_E){
+        const r = await kaivo.readFile(fp);
+        if(r.success){
+          const bytes = Uint8Array.from(atob(r.data),c=>c.charCodeAt(0));
+          await loadPDF(bytes.buffer, name, fp);
+        } else toast('File not found: '+name);
+      }
+    };
+    
+    const pinBtn = d.querySelector('.pin-btn');
+    pinBtn.onclick = async (e) => {
+      e.stopPropagation();
+      if (item.pinned) {
+        await kaivo.unpinFile(fp);
+        toast('File unpinned');
+      } else {
+        await kaivo.pinFile(fp);
+        toast('File pinned');
+      }
+      refreshRecent();
+    };
+    
+    const delBtn = d.querySelector('.del-btn');
+    delBtn.onclick = async (e) => {
+      e.stopPropagation();
+      await kaivo.removeRecent(fp);
+      if (item.pinned) {
+        await kaivo.unpinFile(fp);
+      }
+      toast('File removed from list');
+      refreshRecent();
+    };
+    
+    el.appendChild(d);
+  });
+}
+
+async function clearRecent() {
+  if(IS_E) await kaivo.clearRecent();
+  refreshRecent(); toast('Recent files cleared');
+}
+
+async function resetAppData() {
+  confirm2('Reset App Data', 'Are you sure you want to reset all app settings, library history, recent files, and editor drafts? The app will restart.', async () => {
+    try {
+      localStorage.clear();
+      if (IS_E) {
+        await kaivo.resetSettings();
+      }
+      toast('App data reset. Reloading...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err) {
+      toast('Reset failed: ' + err.message);
+    }
+  });
+}
+
+// ── LIBRARY ───────────────────────────────────────────────
+let libDelTarget = null;
+function openLibDelModal(entry) {
+  libDelTarget = entry;
+  document.getElementById('lib-del-msg').textContent = `${entry.name}\n(${entry.path})`;
+  document.getElementById('lib-del-modal').style.display = 'flex';
+}
+function closeLibDelModal() {
+  document.getElementById('lib-del-modal').style.display = 'none';
+  libDelTarget = null;
+}
+async function execLibDelete(mode) {
+  if (!libDelTarget) return;
+  const entry = libDelTarget;
+  closeLibDelModal();
+  
+  if (mode === 'remove') {
+    if (IS_E) {
+      await kaivo.removeFromLibrary(entry.path);
+    }
+    toast('Removed from library');
+  } else {
+    if (IS_E) {
+      showProgress(mode === 'recycle' ? 'Moving to Recycle Bin…' : 'Deleting permanently…', 'Please wait…');
+      try {
+        const r = await kaivo.deleteFile(entry.path, mode);
+        hideProgress();
+        if (r.success) {
+          await kaivo.removeFromLibrary(entry.path);
+          toast(mode === 'recycle' ? 'Moved to Recycle Bin' : 'Permanently deleted');
+        } else {
+          toast('Delete failed: ' + r.error);
+        }
+      } catch (err) {
+        hideProgress();
+        toast('Delete failed: ' + err.message);
+      }
+    } else {
+      toast('File actions not available in browser mode');
+    }
+  }
+  refreshLibrary();
+}
+
+async function refreshLibrary() {
+  const grid  = document.getElementById('lib-grid');
+  const empty = document.getElementById('lib-empty');
+  const list  = IS_E ? await kaivo.getLibrary() : [];
+  grid.innerHTML = '';
+  if(!list.length){ empty.style.display='block'; return; }
+  empty.style.display='none';
+  list.forEach(entry => {
+    const card = document.createElement('div'); card.className='lib-card';
+    const date = entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : '';
+    card.innerHTML=`
+      <button class="lib-card-del" title="Delete options"><i class="ti ti-trash"></i></button>
+      <div class="lib-thumb"><i class="ti ti-file-type-pdf"></i></div>
+      <div class="lib-name" title="${entry.path}">${entry.name}</div>
+      <div class="lib-meta">${date}${entry.size ? ' · '+fmtSize(entry.size) : ''}</div>
+    `;
+    
+    const delBtn = card.querySelector('.lib-card-del');
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      openLibDelModal(entry);
+    };
+    
+    card.onclick = async () => {
+      if(IS_E){
+        const r = await kaivo.readFile(entry.path);
+        if(r.success){
+          const bytes = Uint8Array.from(atob(r.data),c=>c.charCodeAt(0));
+          await loadPDF(bytes.buffer, entry.name, entry.path);
+        } else toast('File not found: '+entry.name);
+      }
+    };
+    grid.appendChild(card);
+  });
+}
+
+function fmtSize(b){ if(b<1024) return b+'B'; if(b<1048576) return (b/1024).toFixed(0)+'KB'; return (b/1048576).toFixed(1)+'MB'; }
+
+function fileBaseName(filePath) {
+  return filePath.split(/[/\\]/).pop();
+}
+
+async function addToLibrary(filePath, fileName, size) {
+  if(!IS_E) return;
+  await kaivo.addToLibrary({
+    path: filePath,
+    name: fileName || fileBaseName(filePath),
+    size,
+    createdAt: Date.now()
+  });
+}
+
+function imageFormatFromName(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (ext === 'png') return { mime: 'image/png', fmt: 'PNG' };
+  if (ext === 'webp') return { mime: 'image/webp', fmt: 'WEBP' };
+  if (ext === 'gif') return { mime: 'image/gif', fmt: 'GIF' };
+  return { mime: 'image/jpeg', fmt: 'JPEG' };
+}
+
+// ── EDITOR ────────────────────────────────────────────────
+// Paper size → pixel width at 96dpi (for screen preview)
+function mmToPx(mm) { return Math.round(mm * 3.7795); }
+
+function getEditorConfig() {
+  const size = (document.getElementById('paper-size')||{value:'A4'}).value || 'A4';
+  const ps   = PAPER_SIZES[size] || PAPER_SIZES.A4;
+  const marginKey = (document.getElementById('page-margins')||{value:'Normal'}).value || 'Normal';
+  const mg   = MARGIN_PRESETS[marginKey] || MARGIN_PRESETS.Normal;
+  const pageW = mmToPx(ps.w);
+  const pageH = mmToPx(ps.h);
+  const padT = mmToPx(mg.top);
+  const padR = mmToPx(mg.right);
+  const padB = mmToPx(mg.bottom);
+  const padL = mmToPx(mg.left);
+  const contentH = pageH - padT - padB;
+  return { size, pageW, pageH, padT, padR, padB, padL, contentH, margins: mg };
+}
+
+function updateEditorLayout() {
+  const { pageW, pageH, padT, padR, padB, padL } = getEditorConfig();
+  const wrap   = document.getElementById('editor-wrap');
+  const pageEl = document.getElementById('editor-page');
+  wrap.style.width = pageW + 'px';
+  pageEl.style.width = pageW + 'px';
+  pageEl.style.padding = padT+'px '+padR+'px '+padB+'px '+padL+'px';
+  pageEl.style.minHeight = pageH + 'px';
+  scheduleEditorPages();
+}
+
+function syncPageGapSpacers() {
+  const rich = document.getElementById('rich');
+  rich.querySelectorAll('.kaivo-page-gap').forEach(el => el.remove());
+
+  const { contentH, padT, padB } = getEditorConfig();
+  const spacerH = padB + EDITOR_PAGE_GAP + padT;
+  if (spacerH < 4) return;
+
+  let used = 0;
+  const nodes = Array.from(rich.childNodes);
+  for (const node of nodes) {
+    if (node.nodeType !== 1) continue;
+    if (node.classList && node.classList.contains('kaivo-page-gap')) continue;
+    const h = node.offsetHeight || 0;
+    if (!h) continue;
+
+    if (used > 0 && used + h > contentH) {
+      const spacer = document.createElement('div');
+      spacer.className = 'kaivo-page-gap';
+      spacer.setAttribute('contenteditable', 'false');
+      spacer.style.cssText = 'height:' + spacerH + 'px;pointer-events:none;';
+      spacer.setAttribute('data-kaivo-gap', '1');
+      rich.insertBefore(spacer, node);
+      used = h;
+    } else {
+      used += h;
+    }
+    while (used >= contentH) used -= contentH;
+  }
+}
+
+function updateEditorPages() {
+  document.querySelectorAll('.page-break-line').forEach(e => e.remove());
+
+  const { pageW, pageH, padT, padB, contentH } = getEditorConfig();
+  const wrap = document.getElementById('editor-wrap');
+  const pageEl = document.getElementById('editor-page');
+  const backdrops = document.getElementById('editor-page-backdrops');
+  const rich = document.getElementById('rich');
+
+  syncPageGapSpacers();
+
+  const spacerH = padB + EDITOR_PAGE_GAP + padT;
+  let numPages = Math.max(1, Math.ceil(rich.scrollHeight / contentH));
+  numPages = Math.max(numPages, rich.querySelectorAll('.kaivo-page-gap').length + 1);
+  const backdropH = numPages * pageH + (numPages - 1) * EDITOR_PAGE_GAP;
+  const flowH = padT + numPages * contentH + (numPages - 1) * spacerH + padB;
+
+  backdrops.innerHTML = '';
+  for (let i = 0; i < numPages; i++) {
+    const bd = document.createElement('div');
+    bd.className = 'editor-page-backdrop';
+    bd.style.width = pageW + 'px';
+    bd.style.height = pageH + 'px';
+    if (i < numPages - 1) bd.style.marginBottom = EDITOR_PAGE_GAP + 'px';
+    backdrops.appendChild(bd);
+  }
+  backdrops.style.height = backdropH + 'px';
+  pageEl.style.minHeight = Math.max(backdropH, flowH) + 'px';
+
+  for (let i = 1; i < numPages; i++) {
+    const line = document.createElement('div');
+    line.className = 'page-break-line';
+    const gapTop = i * pageH + (i - 1) * EDITOR_PAGE_GAP;
+    line.style.top = (gapTop + EDITOR_PAGE_GAP / 2) + 'px';
+    const lbl = document.createElement('span');
+    lbl.className = 'page-break-label';
+    lbl.textContent = 'Page ' + (i + 1);
+    line.appendChild(lbl);
+    wrap.appendChild(line);
+  }
+  
+  // Auto-save draft on layout update (typing stop)
+  const richEl = document.getElementById('rich');
+  if (richEl) {
+    const content = richEl.innerHTML;
+    try { localStorage.setItem('kaivo_draft', content); } catch {}
+    const now = new Date();
+    const statusEl = document.getElementById('autosave-status');
+    if (statusEl) statusEl.textContent = 'Draft auto-saved at ' + now.toLocaleTimeString();
+  }
+}
+
+let editorPagesRaf = 0;
+function scheduleEditorPages() {
+  if (editorPagesRaf) cancelAnimationFrame(editorPagesRaf);
+  editorPagesRaf = requestAnimationFrame(() => {
+    editorPagesRaf = 0;
+    updateEditorPages();
+  });
+}
+
+function updatePageBreaks() { scheduleEditorPages(); }
+
+function efx(cmd) {
+  document.execCommand(cmd,false,null);
+  const b = document.getElementById('eb-'+cmd); if(b) b.classList.toggle('on');
+  document.getElementById('rich').focus();
+}
+function applyFont() {
+  document.getElementById('rich').style.fontFamily = document.getElementById('ef').value;
+  document.getElementById('rich').style.fontSize   = document.getElementById('efs').value+'px';
+  scheduleEditorPages();
+}
+function setcol(hex,el){
+  document.querySelectorAll('.cdot').forEach(d=>d.classList.remove('on'));
+  el.classList.add('on');
+  document.execCommand('foreColor',false,hex);
+  document.getElementById('rich').focus();
+}
+function clearEd(){
+  confirm2('Clear editor','Erase all content in the editor?',()=>{
+    document.getElementById('rich').innerHTML='<p>Start typing your document here…</p>';
+    scheduleEditorPages();
+    toast('Editor cleared');
+  });
+}
+function newDoc(){
+  confirm2('New document','Unsaved content will be lost. Continue?',()=>{
+    document.getElementById('rich').innerHTML='<p>Start typing your document here…</p>';
+    document.getElementById('pdfname').value='My Document';
+    scheduleEditorPages();
+    toast('New document');
+  });
+}
+async function insertImg() {
+  if(IS_E){
+    const r = await kaivo.openFile([{name:'Images',extensions:['jpg','jpeg','png','webp','gif','bmp']}]);
+    if(r && r.data){
+      const ext=r.fileName.split('.').pop().toLowerCase();
+      const mime=ext==='png'?'image/png':ext==='gif'?'image/gif':'image/jpeg';
+      document.execCommand('insertHTML',false,`<img src="data:${mime};base64,${r.data}" style="max-width:100%;border-radius:4px;margin:8px 0">`);
+      toast('Image inserted'); scheduleEditorPages();
+    }
+  } else {
+    const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+    inp.onchange=e=>{
+      const f=e.target.files[0]; if(!f) return;
+      const rd=new FileReader();
+      rd.onload=ev=>{
+        document.execCommand('insertHTML',false,`<img src="${ev.target.result}" style="max-width:100%;border-radius:4px;margin:8px 0">`);
+        toast('Image inserted'); scheduleEditorPages();
+      };
+      rd.readAsDataURL(f);
+    };
+    inp.click();
+  }
+  document.getElementById('rich').focus();
+}
+function insertTbl(){
+  const row=n=>'<tr>'+['A','B','C'].map((_,i)=>`<td style="border:1px solid #DDD;padding:6px 9px;font-size:13px">Row ${n} Col ${i+1}</td>`).join('')+'</tr>';
+  document.execCommand('insertHTML',false,`<table style="border-collapse:collapse;width:100%;margin:10px 0"><thead><tr>${['Col 1','Col 2','Col 3'].map(h=>`<th style="border:1px solid #DDD;padding:6px 9px;background:#F6F4F0;font-size:12px;font-weight:500;text-align:left">${h}</th>`).join('')}</tr></thead><tbody>${row(1)}${row(2)}</tbody></table>`);
+  document.getElementById('rich').focus();
+  scheduleEditorPages();
+  toast('Table inserted — click cells to edit');
+}
+
+// ── EXPORT PDF — real PDF using printToPDF, NOT window.print ──
+async function exportPDF() {
+  const name = (document.getElementById('pdfname').value.trim()||'My Document')+'.pdf';
+  const { size, margins } = getEditorConfig();
+  const marginKey = (document.getElementById('page-margins')||{value:'Normal'}).value || 'Normal';
+  if(IS_E){
+    const savePath = await kaivo.saveFile({
+      defaultName: name,
+      filters:[{name:'PDF Files',extensions:['pdf']}]
+    });
+    if(!savePath) return;
+
+    await setPrintCapture(true);
+    toast('Generating PDF…');
+    try {
+      const r = await kaivo.exportPDFFromEditor(savePath, size, marginKey, margins);
+      if(r.success){
+        toast('PDF saved: '+fileBaseName(savePath));
+        try {
+          const statR = await kaivo.readFile(savePath);
+          const sizeBytes = statR.data ? Math.round(statR.data.length * 3/4) : 0;
+          await addToLibrary(savePath, fileBaseName(savePath), sizeBytes);
+        } catch {}
+      } else {
+        toast('Export failed: '+r.error);
+      }
+    } finally {
+      await setPrintCapture(false);
+    }
+  } else {
+    toast('Export PDF is available in the desktop app only');
+  }
+}
+
+// Auto-save editor draft
+function startAutoSave(){
+  if(autoSaveTimer) clearInterval(autoSaveTimer);
+  autoSaveTimer = setInterval(()=>{
+    const content = document.getElementById('rich').innerHTML;
+    try { localStorage.setItem('kaivo_draft', content); } catch {}
+    const now = new Date();
+    document.getElementById('autosave-status').textContent =
+      'Draft auto-saved at '+now.toLocaleTimeString();
+  }, 120000);
+}
+// Restore draft (run after DOM ready, not at parse time)
+(function restoreDraft(){
+  try {
+    const draft = localStorage.getItem('kaivo_draft');
+    const rich = document.getElementById('rich');
+    if(draft && draft.trim() && draft !== '<p>Start typing your document here…</p>') {
+      rich.innerHTML = draft;
+    }
+    // Always ensure color is visible
+    rich.style.color = '#17160F';
+  } catch {}
+})();
+startAutoSave();
+let editorPagesTimeout = null;
+function scheduleEditorPagesDebounced() {
+  if (editorPagesTimeout) clearTimeout(editorPagesTimeout);
+  editorPagesTimeout = setTimeout(() => {
+    updateEditorPages();
+  }, 800); // 800ms debounce for typing
+}
+
+function isAtStartOfBlock(range, block) {
+  const testRange = document.createRange();
+  testRange.setStart(block, 0);
+  testRange.setEnd(range.startContainer, range.startOffset);
+  const frag = testRange.cloneContents();
+  if (testRange.toString().replace(/\s/g, '').length > 0) {
+    return false;
+  }
+  if (frag.querySelector('img, table, tr, td, th, br')) {
+    return false;
+  }
+  return true;
+}
+
+function getDeepestContainer(block) {
+  if (block.tagName === 'TABLE') {
+    const cells = block.querySelectorAll('td, th');
+    if (cells.length > 0) {
+      return cells[cells.length - 1];
+    }
+  }
+  if (block.tagName === 'UL' || block.tagName === 'OL') {
+    const lis = block.querySelectorAll('li');
+    if (lis.length > 0) {
+      return lis[lis.length - 1];
+    }
+  }
+  return block;
+}
+
+function isEmptyBlock(block) {
+  if (block.querySelector('img, table, iframe, hr')) return false;
+  if (block.textContent.trim().length > 0) return false;
+  return true;
+}
+
+document.getElementById('rich').addEventListener('keydown', (e) => {
+  if (e.key !== 'Backspace') return;
+  
+  const sel = window.getSelection();
+  if (!sel || !sel.isCollapsed || sel.rangeCount === 0) return;
+  
+  const range = sel.getRangeAt(0);
+  const rich = document.getElementById('rich');
+  
+  // Find the block containing the selection that is a direct child of #rich
+  let currentBlock = range.startContainer;
+  while (currentBlock && currentBlock !== rich && currentBlock.parentNode !== rich) {
+    currentBlock = currentBlock.parentNode;
+  }
+  
+  if (!currentBlock || currentBlock === rich) return;
+  
+  // Check if selection is at the start of this block
+  if (!isAtStartOfBlock(range, currentBlock)) return;
+  
+  // Find the sibling before this block, ignoring any whitespace/empty text nodes
+  let gapEl = currentBlock.previousSibling;
+  while (gapEl && gapEl.nodeType === 3 && gapEl.textContent.trim() === '') {
+    gapEl = gapEl.previousSibling;
+  }
+  
+  if (!gapEl || gapEl.nodeType !== 1 || !gapEl.classList.contains('kaivo-page-gap')) return;
+  
+  // Find the block before the page gap
+  let prevBlock = gapEl.previousSibling;
+  while (prevBlock && prevBlock.nodeType === 3 && prevBlock.textContent.trim() === '') {
+    prevBlock = prevBlock.previousSibling;
+  }
+  
+  if (!prevBlock || prevBlock.nodeType !== 1) return;
+  
+  // Prevent default browser backspace behavior
+  e.preventDefault();
+  
+  const isTextOrTextNode = (el) => el.nodeType === 3 || ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'].includes(el.tagName);
+  const targetContainer = getDeepestContainer(prevBlock);
+  
+  // Create a marker span to place caret
+  const marker = document.createElement('span');
+  marker.id = 'kaivo-backspace-marker';
+  targetContainer.appendChild(marker);
+  
+  if (isTextOrTextNode(prevBlock) && isTextOrTextNode(currentBlock)) {
+    // Merge
+    if (currentBlock.nodeType === 3) {
+      targetContainer.appendChild(currentBlock);
+    } else {
+      while (currentBlock.firstChild) {
+        targetContainer.appendChild(currentBlock.firstChild);
+      }
+      currentBlock.remove();
+    }
+  } else if (isEmptyBlock(currentBlock)) {
+    currentBlock.remove();
+  }
+  
+  gapEl.remove();
+  
+  const markerEl = document.getElementById('kaivo-backspace-marker');
+  if (markerEl) {
+    const newRange = document.createRange();
+    newRange.setStartBefore(markerEl);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    markerEl.remove();
+  }
+  
+  // Recalculate pages immediately
+  updateEditorPages();
+});
+
+// Update page stack on typing and when content size changes
+document.getElementById('rich').addEventListener('input', () => { scheduleEditorPagesDebounced(); }, { passive: true });
+if (typeof ResizeObserver !== 'undefined') {
+  new ResizeObserver(() => { scheduleEditorPages(); }).observe(document.getElementById('rich'));
+}
+
+// Focus editor when clicking empty areas around it
+document.getElementById('editor-scroll').addEventListener('click', (e) => {
+  const t = e.target;
+  if (!t.closest('#rich') && !t.closest('#editor-toolbar') && !t.closest('#editor-foot')) {
+    const r = document.getElementById('rich');
+    if (r && document.activeElement !== r) {
+      r.focus();
+    }
+  }
+});
+
+// ── CONVERT ───────────────────────────────────────────────
+function openConv(label, exts, hint, multi=false) {
+  convMode  = label;
+  convFiles = [];
+  convMulti = multi;
+  document.getElementById('convlabel').textContent = label;
+  document.getElementById('convhint').textContent  = hint;
+  document.getElementById('convdrophint').textContent = hint;
+  document.getElementById('convname').value = '';
+  document.getElementById('filelist').innerHTML = '';
+  document.getElementById('progwrap').style.display='none';
+  // Output ext label
+  const isImgOut = label === 'PDF → Image';
+  document.getElementById('convext').textContent = isImgOut ? '.png(s)' : '.pdf';
+  document.getElementById('convdrop').style.display='block';
+  document.getElementById('convdrop').scrollIntoView({behavior:'smooth'});
+}
+function closeConv(){
+  document.getElementById('convdrop').style.display='none';
+  convFiles=[];
+}
+
+async function pickConvFiles(){
+  if(IS_E){
+    const extsMap = {
+      'Image → PDF':['jpg','jpeg','png','webp','bmp','tiff'],
+      'PDF → Image':['pdf'], 'Merge PDFs':['pdf'], 'Split PDF':['pdf'],
+      'Compress PDF':['pdf'], 'Excel → PDF':['xlsx','xls','csv']
+    };
+    const exts = extsMap[convMode]||['*'];
+    if(convMulti){
+      const files = await kaivo.openFiles([{name:'Files',extensions:exts}]);
+      files.forEach(f=>addConvFile(f.filePath, f.fileName, f.data, f.size));
+    } else {
+      const r = await kaivo.openFile([{name:'Files',extensions:exts}]);
+      if(r && !r.error) addConvFile(r.filePath, r.fileName, r.data, r.size);
+    }
+  } else {
+    const inp = document.createElement('input'); inp.type='file';
+    inp.multiple = convMulti;
+    inp.onchange = e => {
+      [...e.target.files].forEach(f => {
+        const rd = new FileReader();
+        rd.onload = ev => addConvFile(null, f.name, ev.target.result.split(',')[1], f.size);
+        rd.readAsDataURL(f);
+      });
+    };
+    inp.click();
+  }
+}
+
+function addConvFile(fp, name, data, size){
+  if(!convMulti) convFiles=[];
+  convFiles.push({fp, name, data, size});
+  renderConvFileList();
+}
+
+function renderConvFileList(){
+  const el = document.getElementById('filelist'); el.innerHTML='';
+  convFiles.forEach((f,i)=>{
+    const d=document.createElement('div'); d.className='fitem';
+    const sz = f.size ? ' '+fmtSize(f.size) : '';
+    d.innerHTML=`<i class="ti ti-file"></i><span class="fn" title="${f.fp||f.name}">${f.name}</span><span class="fsz">${sz}</span><button class="frm" onclick="removeConvFile(${i})"><i class="ti ti-x"></i></button>`;
+    el.appendChild(d);
+  });
+  if(convFiles.length===1 && !document.getElementById('convname').value)
+    document.getElementById('convname').value = convFiles[0].name.replace(/\.[^.]+$/,'');
+}
+function removeConvFile(i){ convFiles.splice(i,1); renderConvFileList(); }
+
+// ── REAL CONVERSIONS ──────────────────────────────────────
+
+async function loadImageAsDataURL(file) {
+  // file.data is base64 string; file.name has extension
+  if(file.data) return file.data;
+  return null;
+}
+
+async function runConversion(){
+  if(!convFiles.length){ toast('Please add at least one file'); return; }
+  const outName = (document.getElementById('convname').value.trim()||'output');
+  let savePath;
+
+  if(IS_E && convMode !== 'PDF → Image'){
+    savePath = await kaivo.saveFile({
+      defaultName: outName+'.pdf',
+      filters:[{name:'PDF',extensions:['pdf']}]
+    });
+    if(!savePath) return;
+  } else if(IS_E && convMode === 'PDF → Image'){
+    // Pick a folder for output images
+    const folder = await kaivo.openFolder();
+    if(!folder) return;
+    savePath = folder;
+  }
+
+  showProgress('Converting: '+convMode, 'Please wait…');
+
+  try {
+    if(convMode === 'Image → PDF'){
+      await convertImagesToPDF(savePath, outName);
+    } else if(convMode === 'Merge PDFs'){
+      await mergePDFs(savePath, outName);
+    } else if(convMode === 'PDF → Image'){
+      await pdfToImages(savePath, outName);
+    } else if(convMode === 'Compress PDF'){
+      await compressPDF(savePath, outName);
+    } else if(convMode === 'Split PDF'){
+      await splitPDF(savePath, outName);
+    } else if(convMode === 'Excel → PDF'){
+      await excelToPDF(savePath, outName);
+    }
+  } catch(e) {
+    hideProgress();
+    toast('Conversion error: '+e.message);
+    return;
+  }
+}
+
+// ── IMAGE → PDF using jsPDF ───────────────────────────────
+async function convertImagesToPDF(savePath, outName) {
+  if(typeof window.jspdf === 'undefined') {
+    hideProgress(); toast('jsPDF library not loaded'); return;
+  }
+  const { jsPDF } = window.jspdf;
+  let doc = null;
+  let loadedCount = 0;
+
+  for(let i=0; i<convFiles.length; i++) {
+    setProgress(Math.round((i/convFiles.length)*80), 'Processing image '+(i+1)+' of '+convFiles.length+'…');
+    const file = convFiles[i];
+    let b64 = file.data;
+    if(!b64) {
+      toast('Could not read image: '+file.name);
+      continue;
+    }
+
+    const { mime, fmt } = imageFormatFromName(file.name);
+
+    const added = await new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const pw=210, ph=297;
+        const iw=img.naturalWidth, ih=img.naturalHeight;
+        const mw=iw*(25.4/96), mh=ih*(25.4/96);
+        const margin=10;
+        const maxW=pw-2*margin, maxH=ph-2*margin;
+        const ratio=Math.min(maxW/mw, maxH/mh, 1);
+        const fw2=mw*ratio, fh2=mh*ratio;
+        const x=(pw-fw2)/2, y=(ph-fh2)/2;
+        try {
+          if (!doc) doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+          else doc.addPage();
+          doc.addImage('data:'+mime+';base64,'+b64, fmt, x, y, fw2, fh2);
+          loadedCount++;
+          resolve(true);
+        } catch (err) {
+          resolve(false);
+        }
+      };
+      img.onerror = () => resolve(false);
+      img.src = 'data:'+mime+';base64,'+b64;
+    });
+    if (!added) toast('Skipped unreadable image: '+file.name);
+  }
+
+  if (!doc || !loadedCount) {
+    hideProgress();
+    toast('No images could be converted — check file formats');
+    return;
+  }
+
+  setProgress(95, 'Saving PDF…');
+  const pdfBytes = doc.output('arraybuffer');
+  const b64out = bufferToBase64(pdfBytes);
+
+  if(IS_E){
+    const r = await kaivo.writeFile(savePath, b64out);
+    hideProgress();
+    if(r.success){
+      toast('Saved: '+fileBaseName(savePath));
+      await addToLibrary(savePath, fileBaseName(savePath), pdfBytes.byteLength);
+      closeConv();
+    } else toast('Save failed: '+r.error);
+  } else {
+    const blob=new Blob([pdfBytes],{type:'application/pdf'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=outName+'.pdf'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    hideProgress(); closeConv(); toast('PDF downloaded');
+  }
+}
+
+// ── MERGE PDFs using pdf.js + build new file ─────────────
+async function mergePDFs(savePath, outName) {
+  if(typeof window.jspdf === 'undefined') {
+    hideProgress(); toast('jsPDF library not loaded'); return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  let first = true;
+
+  for(let fi=0; fi<convFiles.length; fi++) {
+    const file = convFiles[fi];
+    if(!file.data) continue;
+    setProgress(Math.round((fi/convFiles.length)*80), 'Merging PDF '+(fi+1)+'/'+convFiles.length+'…');
+
+    // Render each page of the PDF as a canvas, then embed in jsPDF
+    const bytes = Uint8Array.from(atob(file.data), c=>c.charCodeAt(0));
+    const srcDoc = await pdfjsLib.getDocument({data: bytes}).promise;
+
+    for(let pi=1; pi<=srcDoc.numPages; pi++) {
+      const page = await srcDoc.getPage(pi);
+      const vp   = page.getViewport({scale:2.0});
+      const cv   = document.createElement('canvas');
+      cv.width=vp.width; cv.height=vp.height;
+      await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      const imgData = cv.toDataURL('image/jpeg', 0.92);
+
+      // Page dimensions in pt (1 pt = 1/72 inch)
+      const wPt = (vp.width/2) * (72/96);
+      const hPt = (vp.height/2) * (72/96);
+
+      if(!first) doc.addPage([wPt, hPt]);
+      else {
+        // Set first page size
+        const existingPageCount = doc.internal.getNumberOfPages();
+        doc.deletePage(existingPageCount); // remove blank first page
+        doc.addPage([wPt, hPt]);
+        first = false;
+      }
+      doc.addImage(imgData, 'JPEG', 0, 0, wPt, hPt);
+    }
+  }
+
+  setProgress(95, 'Saving merged PDF…');
+  const pdfBytes = doc.output('arraybuffer');
+  const b64out = bufferToBase64(pdfBytes);
+
+  if(IS_E){
+    const r = await kaivo.writeFile(savePath, b64out);
+    hideProgress();
+    if(r.success){
+      toast('Merged PDF saved: '+fileBaseName(savePath));
+      await addToLibrary(savePath, fileBaseName(savePath), pdfBytes.byteLength);
+      closeConv();
+    } else toast('Save failed: '+r.error);
+  } else {
+    const blob=new Blob([pdfBytes],{type:'application/pdf'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=outName+'.pdf'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    hideProgress(); closeConv(); toast('Merged PDF downloaded');
+  }
+}
+
+// ── PDF → IMAGES ──────────────────────────────────────────
+async function pdfToImages(folder, outName) {
+  const file = convFiles[0];
+  if(!file.data){ hideProgress(); toast('No file data'); return; }
+
+  const bytes = Uint8Array.from(atob(file.data), c=>c.charCodeAt(0));
+  const srcDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+
+  for(let pi=1; pi<=srcDoc.numPages; pi++) {
+    setProgress(Math.round((pi/srcDoc.numPages)*90), 'Rendering page '+pi+' of '+srcDoc.numPages+'…');
+    const page = await srcDoc.getPage(pi);
+    const vp   = page.getViewport({scale:2.0});
+    const cv   = document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+
+    const imgData = cv.toDataURL('image/png');
+    const b64img  = imgData.split(',')[1];
+    const imgName = outName+'_page'+pi+'.png';
+
+    if(IS_E){
+      const imgPath = folder + '\\' + imgName;
+      await kaivo.writeFile(imgPath, b64img);
+    } else {
+      const blob=new Blob([Uint8Array.from(atob(b64img),c=>c.charCodeAt(0))],{type:'image/png'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=imgName; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+  }
+  hideProgress();
+  toast('Exported '+srcDoc.numPages+' image(s)');
+  closeConv();
+}
+
+// ── COMPRESS PDF (re-render at lower quality) ─────────────
+async function compressPDF(savePath, outName) {
+  const file = convFiles[0];
+  if(!file.data){ hideProgress(); toast('No file data'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+
+  const bytes = Uint8Array.from(atob(file.data), c=>c.charCodeAt(0));
+  const srcDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+  let first=true;
+
+  for(let pi=1; pi<=srcDoc.numPages; pi++) {
+    setProgress(Math.round((pi/srcDoc.numPages)*85), 'Compressing page '+pi+'…');
+    const page = await srcDoc.getPage(pi);
+    const vp   = page.getViewport({scale:1.5}); // lower scale = smaller
+    const cv   = document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    const imgData = cv.toDataURL('image/jpeg', 0.7); // lower quality
+    const wPt=(vp.width/1.5)*(72/96), hPt=(vp.height/1.5)*(72/96);
+    if(!first) doc.addPage([wPt,hPt]);
+    else { doc.deletePage(1); doc.addPage([wPt,hPt]); first=false; }
+    doc.addImage(imgData,'JPEG',0,0,wPt,hPt);
+  }
+
+  setProgress(95,'Saving…');
+  const pdfBytes = doc.output('arraybuffer');
+  const origSize = Math.round(file.data.length * 3/4);
+  const newSize  = pdfBytes.byteLength;
+  const b64out   = bufferToBase64(pdfBytes);
+
+  if(IS_E){
+    const r = await kaivo.writeFile(savePath, b64out);
+    hideProgress();
+    if(r.success){
+      const saved = Math.round((1-newSize/origSize)*100);
+      toast(`Compressed! ${saved > 0 ? saved+'% smaller' : 'Saved'}: `+fileBaseName(savePath));
+      await addToLibrary(savePath, fileBaseName(savePath), newSize);
+      closeConv();
+    } else toast('Save failed: '+r.error);
+  } else {
+    const blob=new Blob([pdfBytes],{type:'application/pdf'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=outName+'.pdf'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    hideProgress(); closeConv(); toast('Compressed PDF downloaded');
+  }
+}
+
+// ── SPLIT PDF ─────────────────────────────────────────────
+async function splitPDF(savePath, outName) {
+  const file = convFiles[0];
+  if(!file.data){ hideProgress(); toast('No file data'); return; }
+  const { jsPDF } = window.jspdf;
+
+  const bytes = Uint8Array.from(atob(file.data), c=>c.charCodeAt(0));
+  const srcDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+
+  for(let pi=1; pi<=srcDoc.numPages; pi++) {
+    setProgress(Math.round((pi/srcDoc.numPages)*90), 'Splitting page '+pi+'…');
+    const page = await srcDoc.getPage(pi);
+    const vp   = page.getViewport({scale:2.0});
+    const cv   = document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    const imgData = cv.toDataURL('image/jpeg',0.92);
+    const wPt=(vp.width/2)*(72/96), hPt=(vp.height/2)*(72/96);
+    const pageDoc = new jsPDF({unit:'pt',format:[wPt,hPt]});
+    pageDoc.addImage(imgData,'JPEG',0,0,wPt,hPt);
+    const pdfBytes = pageDoc.output('arraybuffer');
+    const b64p = bufferToBase64(pdfBytes);
+    const pageName = outName+'_page'+pi+'.pdf';
+
+    if(IS_E){
+      const dir  = savePath.replace(/[^/\\]+$/, '');
+      const sep  = savePath.includes('\\') ? '\\' : '/';
+      const dest = dir.endsWith(sep) ? dir + pageName : dir + sep + pageName;
+      const wr = await kaivo.writeFile(dest, b64p);
+      if (wr.success) await addToLibrary(dest, pageName, pdfBytes.byteLength);
+    } else {
+      const blob=new Blob([pdfBytes],{type:'application/pdf'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=pageName; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),500);
+    }
+  }
+  hideProgress();
+  toast('Split into '+srcDoc.numPages+' PDFs');
+  closeConv();
+}
+
+// ── EXCEL → PDF (basic: render as table) ─────────────────
+async function excelToPDF(savePath, outName) {
+  // Best-effort: create a PDF with the CSV/Excel data as text table
+  const { jsPDF } = window.jspdf;
+  const file = convFiles[0];
+  if(!file.data){ hideProgress(); toast('No file data'); return; }
+
+  setProgress(30, 'Reading spreadsheet…');
+  const name = file.name.toLowerCase();
+  const doc  = new jsPDF({ unit:'mm', format:'a4' });
+  doc.setFontSize(10);
+  let y = 15;
+
+  if(name.endsWith('.csv')){
+    const text = atob(file.data);
+    const lines = text.split('\n');
+    for(const line of lines){
+      if(y > 280){ doc.addPage(); y=15; }
+      doc.text(line.replace(/,/g, '  |  '), 10, y);
+      y += 5.5;
+    }
+  } else {
+    // For xlsx/xls: inform user and embed a notice
+    doc.setFontSize(12);
+    doc.text(file.name, 10, 20);
+    doc.setFontSize(10);
+    doc.text('Excel to PDF conversion. File: '+file.name, 10, 35);
+    doc.text('For full Excel support, open in LibreOffice and export as PDF.', 10, 45);
+  }
+
+  setProgress(90, 'Saving…');
+  const pdfBytes = doc.output('arraybuffer');
+  const b64out   = bufferToBase64(pdfBytes);
+
+  if(IS_E){
+    const r = await kaivo.writeFile(savePath, b64out);
+    hideProgress();
+    if(r.success){
+      toast('Saved: '+fileBaseName(savePath));
+      await addToLibrary(savePath, fileBaseName(savePath), pdfBytes.byteLength);
+      closeConv();
+    } else toast('Save failed: '+r.error);
+  } else {
+    const blob=new Blob([pdfBytes],{type:'application/pdf'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=outName+'.pdf'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    hideProgress(); closeConv(); toast('PDF downloaded');
+  }
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────
+function dzDragOver(e,id){ e.preventDefault(); document.getElementById(id).classList.add('drag'); }
+function dzDragLeave(id){ document.getElementById(id).classList.remove('drag'); }
+async function dzDrop(e,id){
+  e.preventDefault(); document.getElementById(id).classList.remove('drag');
+  const files=[...e.dataTransfer.files]; if(!files.length) return;
+  for(const f of files){
+    const buf = await f.arrayBuffer();
+    const b64 = bufferToBase64(buf);
+    addConvFile(null, f.name, b64, f.size);
+  }
+}
+
+
+
+// ── RENAME & SAVE ─────────────────────────────────────────
+async function applyRename(){
+  const v=document.getElementById('rninput').value.trim();
+  if(!v){ toast('Enter a file name'); return; }
+  const newName=v+'.pdf';
+  if(IS_E&&openedPath){
+    const oldPath = openedPath;
+    const r=await kaivo.renameFile(openedPath,newName);
+    if(r.success){
+      openedPath=r.newPath; openedName=newName;
+      document.getElementById('doctitle').textContent=newName;
+      document.getElementById('currfn').textContent=newName;
+      await kaivo.updateLibraryEntry(oldPath, { path: r.newPath, name: newName });
+      toast('Renamed to "'+newName+'"'); refreshRecent(); refreshLibrary();
+    } else toast('Rename failed: '+r.error);
+  } else {
+    openedName=newName;
+    document.getElementById('doctitle').textContent=newName;
+    document.getElementById('currfn').textContent=newName;
+    toast('Renamed to "'+newName+'"');
+  }
+}
+
+async function saveCopyDownloads(){
+  if(!openedData){ toast('No file open'); return; }
+  const n=(document.getElementById('copyname').value.trim()||'Copy')+'.pdf';
+  if(IS_E){
+    const dl=await kaivo.getPath('downloads');
+    const dest=dl+'\\'+n;
+    const b64=bufferToBase64(openedData);
+    const r=await kaivo.writeFile(dest,b64);
+    if(r.success){
+      toast('Saved "'+n+'" to Downloads');
+      await addToLibrary(dest, n, openedData.byteLength);
+    }
+    else toast('Save failed: '+r.error);
+  } else toast('Saved "'+n+'" to Downloads');
+}
+
+async function saveCopyPicker(){
+  if(!openedData){ toast('No file open'); return; }
+  const n=(document.getElementById('copyname').value.trim()||'Copy')+'.pdf';
+  if(IS_E){
+    const sp=await kaivo.saveFile({defaultName:n,filters:[{name:'PDF',extensions:['pdf']}]});
+    if(!sp) return;
+    const b64=bufferToBase64(openedData);
+    const r=await kaivo.writeFile(sp,b64);
+    if(r.success){
+      toast('Saved to '+fileBaseName(sp));
+      await addToLibrary(sp, fileBaseName(sp), openedData.byteLength);
+    }
+    else toast('Save failed: '+r.error);
+  } else toast('Saved "'+n+'"');
+}
+
+async function exportAs(type){
+  if(!openedData){ toast('No file open'); return; }
+  const labels={flat:'Flat PDF',pdfa:'PDF/A',print:'Print PDF',compressed:'Compressed PDF'};
+  const n=openedName.replace(/\.pdf$/i,'')+' — '+labels[type]+'.pdf';
+  if(IS_E){
+    const sp=await kaivo.saveFile({defaultName:n,filters:[{name:'PDF',extensions:['pdf']}]});
+    if(!sp) return;
+    showProgress('Exporting '+labels[type],'Please wait…');
+    setTimeout(async()=>{
+      const b64=bufferToBase64(openedData);
+      const r=await kaivo.writeFile(sp,b64);
+      hideProgress();
+      if(r.success){
+        toast('Exported: '+fileBaseName(sp));
+        await addToLibrary(sp, fileBaseName(sp), openedData.byteLength);
+      } else toast('Export failed: '+r.error);
+    },800);
+  } else toast('Exported as '+labels[type]);
+}
+
+// ── SETTINGS ──────────────────────────────────────────────
+async function toggleDefault(btn){
+  btn.classList.toggle('on');
+  const on=btn.classList.contains('on');
+  if(IS_E){
+    if(on){
+      toast('Setting as default PDF reader…');
+      const r=await kaivo.setDefault();
+      if(r.success){
+        document.getElementById('defconfirm').style.display='flex';
+        const ti=document.getElementById('tog-icon'); ti.classList.add('on');
+        toast('Kaivo PDF is now your default reader.');
+      } else { btn.classList.remove('on'); toast('Failed — try right-clicking and "Run as administrator"'); }
+    } else {
+      await kaivo.removeDefault();
+      document.getElementById('defconfirm').style.display='none';
+      toast('Removed as default PDF reader');
+    }
+    await kaivo.setSetting('isDefaultReader',on);
+  } else {
+    document.getElementById('defconfirm').style.display=on?'flex':'none';
+  }
+}
+
+async function toggleIcon(btn){
+  btn.classList.toggle('on');
+  const on=btn.classList.contains('on');
+  if(IS_E){
+    if(on){
+      const r=await kaivo.applyIcon();
+      if(r.success) toast('Kaivo icon applied — refresh Explorer to see');
+      else { btn.classList.remove('on'); toast('Icon apply failed'); return; }
+    } else { await kaivo.removeDefault(); toast('Kaivo icon removed from PDF files'); }
+    await kaivo.setSetting('iconApplied',on);
+  }
+}
+
+async function saveTog(btn,key){
+  btn.classList.toggle('on');
+  if(IS_E) await kaivo.setSetting(key, btn.classList.contains('on'));
+  if(key==='autoSave'){
+    btn.classList.contains('on') ? startAutoSave() : clearInterval(autoSaveTimer);
+  }
+}
+
+async function changeSaveFolder(){
+  if(IS_E){
+    const f=await kaivo.openFolder();
+    if(f){ document.getElementById('save-folder-label').textContent=f; toast('Default folder: '+f); }
+  } else toast('Folder picker (desktop only)');
+}
+
+// ── PROGRESS ──────────────────────────────────────────────
+let _ovIv;
+function showProgress(title,msg){
+  document.getElementById('ovtitle').textContent=title;
+  document.getElementById('ovmsg').textContent=msg;
+  document.getElementById('ovfill').style.width='0%';
+  document.getElementById('ovpct').textContent='0%';
+  document.getElementById('overlay').classList.add('show');
+  let p=0;
+  clearInterval(_ovIv);
+  _ovIv=setInterval(()=>{
+    p+=Math.random()*4+1;
+    if(p>=90){clearInterval(_ovIv);}
+    setProgress(Math.min(p,90));
+  },200);
+}
+function setProgress(pct,msg){
+  document.getElementById('ovfill').style.width=pct+'%';
+  document.getElementById('ovpct').textContent=Math.round(pct)+'%';
+  if(msg){ document.getElementById('ovmsg').textContent=msg; }
+}
+function hideProgress(){
+  clearInterval(_ovIv);
+  document.getElementById('ovfill').style.width='100%';
+  document.getElementById('ovpct').textContent='100%';
+  setTimeout(()=>document.getElementById('overlay').classList.remove('show'),400);
+}
+
+// ── MODAL / CONFIRM ───────────────────────────────────────
+function confirm2(title,body,onOK){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').textContent=body;
+  modalCb=onOK;
+  document.getElementById('modal').classList.add('show');
+}
+function modalOK(){ document.getElementById('modal').classList.remove('show'); if(modalCb){modalCb();modalCb=null;} }
+function modalCancel(){ document.getElementById('modal').classList.remove('show'); modalCb=null; }
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))modalCancel();});
+document.getElementById('lib-del-modal').addEventListener('click',e=>{if(e.target===document.getElementById('lib-del-modal'))closeLibDelModal();});
+
+// ── TOAST ─────────────────────────────────────────────────
+let _tt;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  const mod=e.ctrlKey||e.metaKey;
+  if(mod){
+    if(e.key==='o'){e.preventDefault();doOpenFile();}
+    if(e.key==='w'){e.preventDefault();closeFile();}
+    if(e.key==='s'){e.preventDefault();exportPDF();}
+    if(e.key==='p'){e.preventDefault();doPrint();}
+    if(e.key==='='||e.key==='+'){e.preventDefault();chzoom(10);}
+    if(e.key==='-'){e.preventDefault();chzoom(-10);}
+    if(e.key==='0'){e.preventDefault();zoom=1;document.getElementById('zval').textContent='100%';if(pdfDoc)reRenderAll();}
+  }
+  if(!mod&&!e.shiftKey){
+    const vp=document.getElementById('panel-viewer').classList.contains('on');
+    if(e.key==='ArrowLeft'&&vp) prevPage();
+    if(e.key==='ArrowRight'&&vp) nextPage();
+  }
+});
+
+// Drag PDF onto window to open
+document.body.addEventListener('dragover',e=>{if([...e.dataTransfer.types].includes('Files'))e.preventDefault();});
+document.body.addEventListener('drop',async e=>{
+  e.preventDefault();
+  const f=e.dataTransfer.files[0]; if(!f) return;
+  if(f.name.toLowerCase().endsWith('.pdf')){
+    const buf=await f.arrayBuffer();
+    await loadPDF(buf,f.name,null);
+  } else toast('Drop a PDF file to open it');
+});
+
+// ── ELECTRON EVENT LISTENERS ──────────────────────────────
+if(IS_E){
+  kaivo.on('menu-open',  ()=>doOpenFile());
+  kaivo.on('menu-close', ()=>closeFile());
+  kaivo.on('menu-save',  ()=>doDownload());
+  kaivo.on('menu-print', ()=>doPrint());
+  kaivo.on('zoom-in',    ()=>chzoom(10));
+  kaivo.on('zoom-out',   ()=>chzoom(-10));
+  kaivo.on('zoom-reset', ()=>{zoom=1;document.getElementById('zval').textContent='100%';if(pdfDoc)reRenderAll();});
+  kaivo.on('open-file',  async fp=>{
+    const r=await kaivo.readFile(fp);
+    if(r.success){
+      const bytes=Uint8Array.from(atob(r.data),c=>c.charCodeAt(0));
+      await loadPDF(bytes.buffer,fp.split(/[/\\]/).pop(),fp);
+    }
+  });
+  kaivo.on('recent-updated', ()=>refreshRecent());
+  kaivo.on('library-updated', ()=>{ if(document.getElementById('panel-library').classList.contains('on')) refreshLibrary(); });
+
+  // Load persisted settings
+  kaivo.getAllSettings().then(s=>{
+    if(!s) return;
+    if(s.darkMode)       applyDark(true);
+    if(s.zoom)           { zoom=s.zoom/100; document.getElementById('zval').textContent=s.zoom+'%'; }
+    if(s.isDefaultReader){ document.getElementById('tog-default').classList.add('on'); document.getElementById('defconfirm').style.display='flex'; }
+    if(s.iconApplied)    document.getElementById('tog-icon').classList.add('on');
+    if(s.reopenLast)     document.getElementById('tog-reopen').classList.add('on');
+    else                 document.getElementById('tog-reopen').classList.remove('on');
+    if(!s.autoSave)      { document.getElementById('tog-autosave').classList.remove('on'); clearInterval(autoSaveTimer); }
+
+    if(s.exportQuality)  document.getElementById('sel-quality').value=s.exportQuality;
+    if(s.defaultSaveDir) document.getElementById('save-folder-label').textContent=s.defaultSaveDir;
+  });
+
+  kaivo.getVersion().then(v=>{
+    document.getElementById('ver-label').textContent='v'+v;
+    document.getElementById('sr').textContent='Kaivo PDF v'+v;
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────
+go('viewer');
+refreshRecent();
+updateEditorLayout(); // set initial paper size + page stack
+</script>
+</body>
+</html>
