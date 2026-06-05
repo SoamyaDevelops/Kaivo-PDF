@@ -5,7 +5,7 @@
 !macro customInstall
   ; ── Register .pdf file association under HKCU (no admin needed) ──────────
   WriteRegStr HKCU "Software\Classes\KaivoPDF.pdf" "" "PDF Document"
-  WriteRegStr HKCU "Software\Classes\KaivoPDF.pdf\DefaultIcon" "" "$INSTDIR\resources\app\pdf-file-icon.ico"
+  WriteRegStr HKCU "Software\Classes\KaivoPDF.pdf\DefaultIcon" "" "$INSTDIR\resources\pdf-file-icon.ico"
   WriteRegStr HKCU "Software\Classes\KaivoPDF.pdf\shell\open\command" "" '"$INSTDIR\Kaivo PDF.exe" "%1"'
   WriteRegStr HKCU "Software\Classes\.pdf" "" "KaivoPDF.pdf"
 

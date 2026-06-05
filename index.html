@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; worker-src blob: https://cdn.jsdelivr.net;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; worker-src 'self' blob: https://cdn.jsdelivr.net;">
 <title>Kaivo PDF</title>
 <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@ body.dark{
   --text:#E8E4DC;--muted:#7A7670;--accent:#E05A2B;--acl:#2A1A12;
 }
 html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;line-height:1.45;overflow:hidden;user-select:none}
-#editor-scroll,#editor-wrap,#editor-page,#rich,.editor-page{user-select:text!important;-webkit-user-select:text!important}
+#editor-scroll,#editor-wrap,#editor-page,#rich,.editor-page,#viewer-scroll,.pdfpage,.textLayer,.textLayer span{user-select:text!important;-webkit-user-select:text!important}
 #rich[contenteditable]{-webkit-user-select:text!important;user-select:text!important;cursor:text!important;pointer-events:auto!important}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -249,9 +249,56 @@ body.dark #toast{background:#E8E4DC;color:#17160F}
 .modalrow{display:flex;gap:8px;justify-content:flex-end}
 
 /* ── PDF.js text layer (selectable text) ── */
-.pdf-text-layer { position:absolute; top:0; left:0; overflow:hidden; opacity:1; line-height:1; user-select:none; -webkit-user-select:none; pointer-events:auto; z-index:2; }
-.pdf-text-layer span { color:transparent; position:absolute; white-space:pre; cursor:text; transform-origin:0% 0%; margin:0; padding:0; line-height:1; user-select:text; -webkit-user-select:text; }
-.pdf-text-layer span::selection { background:rgba(37,99,235,.4); color:transparent; }
+.textLayer { position:absolute; top:0; left:0; right:0; bottom:0; overflow:hidden; opacity:1; line-height:1; user-select:text; -webkit-user-select:text; pointer-events:auto; z-index:2; }
+.textLayer span { color:transparent; position:absolute; white-space:pre; cursor:text; transform-origin:0% 0%; margin:0; padding:0; line-height:1; user-select:text; -webkit-user-select:text; }
+.textLayer span::selection { background:rgba(37,99,235,.4); color:transparent; }
+.textLayer.ocrLayer span::selection { background:rgba(192,67,31,.25); }
+
+/* OCR Loading Indicator */
+.ocr-status-indicator {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(23, 22, 15, 0.85);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
+  pointer-events: none;
+  font-weight: 500;
+  font-family: var(--font);
+  animation: fadeIn 0.2s ease-out;
+}
+body.dark .ocr-status-indicator {
+  background: rgba(36, 34, 32, 0.85);
+  border: 1px solid var(--border);
+}
+.ocr-status-indicator.error {
+  background: rgba(217, 83, 79, 0.9);
+}
+.ocr-status-indicator.success {
+  background: rgba(92, 184, 92, 0.9);
+}
+.ocr-spinner {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ── PDF.js loading state ─────────── */
 .pdfloading{display:flex;align-items:center;justify-content:center;height:140px;color:var(--muted);font-size:12px;gap:8px}
@@ -265,10 +312,9 @@ body.dark #toast{background:#E8E4DC;color:#17160F}
   #app,#body,#main,#panels{overflow:visible!important;height:auto!important;position:static!important;background:#fff!important}
   #editor-scroll{padding:0!important;background:#fff!important;overflow:visible!important;display:block!important}
   .editor-page-backdrop{background:#fff!important;box-shadow:none!important}
-  .editor-page{background:transparent!important;box-shadow:none!important}
+  .editor-page{background:transparent!important;box-shadow:none!important;padding:0!important}
   .kaivo-page-gap{height:0!important;margin:0!important;padding:0!important;page-break-before:always;break-before:page}
   #rich{color:#17160F!important;min-height:unset}
-  @page{margin:0}
 }
 html.print-capture-root,html.print-capture-root body{overflow:visible!important;height:auto!important;min-height:0!important}
 body.print-capture #titlebar,body.print-capture #sidebar,body.print-capture #statusbar,
@@ -282,7 +328,7 @@ body.print-capture #editor-scroll{padding:0!important;background:#fff!important;
 body.print-capture #editor-wrap,body.print-capture #editor-page{height:auto!important;overflow:visible!important}
 body.print-capture #editor-page-backdrops{display:none!important}
 body.print-capture .editor-page-backdrop{background:#fff!important;box-shadow:none!important}
-body.print-capture .editor-page{background:transparent!important}
+body.print-capture .editor-page{background:transparent!important;padding:0!important}
 body.print-capture .kaivo-page-gap{height:0!important;margin:0!important;padding:0!important;border:0!important;page-break-before:always!important;break-before:page!important}
 body.print-capture #rich{color:#17160F!important;overflow:visible!important}
 
@@ -567,6 +613,10 @@ body.print-capture #rich{color:#17160F!important;overflow:visible!important}
       <div class="cvico"><i class="ti ti-file-spreadsheet"></i></div>
       <h3>Excel to PDF</h3><p>Convert spreadsheets into clean PDF documents.</p>
     </div>
+    <div class="cvc" onclick="openConv('Convert to OCR PDF','pdf','Generate a searchable text-embedded PDF from scanned files',false)">
+      <div class="cvico"><i class="ti ti-scan"></i></div>
+      <h3>Convert to OCR PDF</h3><p>Convert a scanned, non-searchable PDF into a searchable OCR PDF.</p>
+    </div>
   </div>
 
   <div id="convdrop">
@@ -818,14 +868,20 @@ body.print-capture #rich{color:#17160F!important;overflow:visible!important}
 <div id="toast"></div>
 
 <!-- pdf.js for real PDF rendering -->
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="./node_modules/pdfjs-dist/build/pdf.min.js"></script>
 <!-- jsPDF for creating real PDFs from images/merging -->
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<!-- PDF-Lib for merging and manipulating PDFs -->
+<script src="./node_modules/pdf-lib/dist/pdf-lib.min.js"></script>
+<!-- Tesseract.js local library -->
+<script src="./node_modules/tesseract.js/dist/tesseract.min.js"></script>
+<!-- Hybrid PDF Text Layer & OCR Viewer Module -->
+<script src="./pdf-ocr-viewer.js"></script>
 
 <script>
 'use strict';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = './node_modules/pdfjs-dist/build/pdf.worker.min.js';
 
 const IS_E = typeof window.kaivo !== 'undefined';
 
@@ -1081,39 +1137,20 @@ async function renderPage(pageNum) {
   await page.render({ canvasContext: canvas.getContext('2d'), viewport: hiVP }).promise;
   wrap.appendChild(canvas);
 
-  // --- Selectable text layer (pdf.js native text layer) ---
+  // --- Selectable text layer (Hybrid PDF & OCR selection) ---
   try {
-    let hasNativeText = false;
-    const textContent = await page.getTextContent();
-    if (textContent && textContent.items && textContent.items.length > 0) {
-      hasNativeText = true;
-      const textLayerDiv = document.createElement('div');
-      textLayerDiv.className = 'pdf-text-layer';
-      textLayerDiv.style.cssText = [
-        'position:absolute', 'top:0', 'left:0',
-        'width:' + Math.round(vp.width) + 'px',
-        'height:' + Math.round(vp.height) + 'px',
-        'overflow:hidden', 'line-height:1',
-        'user-select:none', '-webkit-user-select:none',
-        'pointer-events:auto', 'z-index:2'
-      ].join(';');
-      wrap.appendChild(textLayerDiv);
-      const renderTask = pdfjsLib.renderTextLayer({
-        textContentSource: textContent,
-        container: textLayerDiv,
-        viewport: vp,
-        textDivs: []
+    if (!window.hybridPdfViewer) {
+      window.hybridPdfViewer = new HybridPdfViewer({
+        tesseractPath: './node_modules/tesseract.js/dist/tesseract.min.js'
       });
-      // Await the render so spans are placed before we continue
-      if (renderTask && typeof renderTask.promise !== 'undefined') {
-        await renderTask.promise.catch(() => {});
-      } else if (renderTask && typeof renderTask.then === 'function') {
-        await renderTask.catch(() => {});
-      }
     }
-
-
-  } catch(e) {}
+    // Render text overlay asynchronously to keep page loading super fast
+    window.hybridPdfViewer.renderTextOverlay(page, canvas, wrap, vp).catch(err => {
+      console.error('Failed rendering hybrid text overlay:', err);
+    });
+  } catch(e) {
+    console.error('OCR/Text layer generation error:', e);
+  }
   // --- End text layer ---
 
   wrap.addEventListener('click', () => scrollToPage(pageNum));
@@ -1231,14 +1268,14 @@ async function setPrintCapture(on) {
     updateEditorPages();
     const scroll = document.getElementById('editor-scroll');
     if (scroll) scroll.scrollTop = 0;
-    const { size } = getEditorConfig();
+    const { size, margins: mg } = getEditorConfig();
     const ps = PAPER_SIZES[size] || PAPER_SIZES.A4;
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = 'print-capture-style';
       document.head.appendChild(styleEl);
     }
-    styleEl.textContent = `@page{size:${ps.w}mm ${ps.h}mm;margin:0}`;
+    styleEl.textContent = `@media print { @page{size:${ps.w}mm ${ps.h}mm;margin:${mg.top}mm ${mg.right}mm ${mg.bottom}mm ${mg.left}mm} }`;
   } else {
     document.documentElement.classList.remove('print-capture-root');
     document.body.classList.remove('print-capture');
@@ -1282,6 +1319,12 @@ function closePrintPreview() {
 async function executePrint() {
   if (!printPreviewData) return;
   
+  // Inject temporary print margins override style to set page margin to 0 for print preview canvases
+  let printStyle = document.createElement('style');
+  printStyle.id = 'canvas-print-margin-style';
+  printStyle.textContent = `@media print { @page { margin: 0 !important; } }`;
+  document.head.appendChild(printStyle);
+
   // Add printing class to body to isolate the preview pages for printer
   document.body.classList.add('printing-preview');
   
@@ -1291,6 +1334,9 @@ async function executePrint() {
   // Remove printing class to restore normal UI view
   document.body.classList.remove('printing-preview');
   
+  // Clean up print style
+  printStyle.remove();
+
   toast('Sent to printer');
   closePrintPreview();
 }
@@ -1559,13 +1605,24 @@ function getEditorConfig() {
 }
 
 function updateEditorLayout() {
-  const { pageW, pageH, padT, padR, padB, padL } = getEditorConfig();
+  const { pageW, pageH, padT, padR, padB, padL, size, margins: mg } = getEditorConfig();
   const wrap   = document.getElementById('editor-wrap');
   const pageEl = document.getElementById('editor-page');
   wrap.style.width = pageW + 'px';
   pageEl.style.width = pageW + 'px';
   pageEl.style.padding = padT+'px '+padR+'px '+padB+'px '+padL+'px';
   pageEl.style.minHeight = pageH + 'px';
+
+  // Inject / update dynamic print margins stylesheet
+  let printStyle = document.getElementById('kaivo-print-margins');
+  if (!printStyle) {
+    printStyle = document.createElement('style');
+    printStyle.id = 'kaivo-print-margins';
+    document.head.appendChild(printStyle);
+  }
+  const ps = PAPER_SIZES[size] || PAPER_SIZES.A4;
+  printStyle.textContent = `@media print { @page { size: ${ps.w}mm ${ps.h}mm; margin: ${mg.top}mm ${mg.right}mm ${mg.bottom}mm ${mg.left}mm; } }`;
+
   scheduleEditorPages();
 }
 
@@ -2033,6 +2090,8 @@ async function runConversion(){
       await splitPDF(savePath, outName);
     } else if(convMode === 'Excel → PDF'){
       await excelToPDF(savePath, outName);
+    } else if(convMode === 'Convert to OCR PDF'){
+      await convertToOcrPDF(savePath, outName);
     }
   } catch(e) {
     hideProgress();
@@ -2352,6 +2411,96 @@ async function excelToPDF(savePath, outName) {
     const a=document.createElement('a'); a.href=url; a.download=outName+'.pdf'; a.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
     hideProgress(); closeConv(); toast('PDF downloaded');
+  }
+}
+
+async function convertToOcrPDF(savePath, outName) {
+  if (convFiles.length === 0) return;
+  const file = convFiles[0];
+  if (!file.data) { hideProgress(); toast('No file data'); return; }
+
+  const bytes = Uint8Array.from(atob(file.data), c => c.charCodeAt(0));
+
+  try {
+    // 1. Load scanned PDF document
+    setProgress(5, 'Loading PDF document…');
+    const pdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise;
+    const totalPages = pdfDoc.numPages;
+
+    // 2. Instantiate and obtain cached Tesseract worker
+    setProgress(10, 'Initializing OCR engine…');
+    if (!window.hybridPdfViewer) {
+      window.hybridPdfViewer = new HybridPdfViewer({
+        tesseractPath: './node_modules/tesseract.js/dist/tesseract.min.js'
+      });
+    }
+    const worker = await window.hybridPdfViewer.getWorker();
+
+    // 3. Create final PDF-Lib document
+    const finalPdf = await PDFLib.PDFDocument.create();
+
+    // 4. Sequentially process pages
+    for (let i = 1; i <= totalPages; i++) {
+      setProgress(Math.round(10 + ((i - 1) / totalPages) * 80), `OCRing page ${i} of ${totalPages}…`);
+      
+      const page = await pdfDoc.getPage(i);
+      
+      // Render page to canvas at high resolution for quality OCR (scale: 2.0)
+      const canvas = document.createElement('canvas');
+      const vp = page.getViewport({ scale: 2.0 });
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+      // Extract image data
+      const imageData = canvas.toDataURL('image/png');
+      
+      // Run OCR asking for PDF output
+      const ocrResult = await worker.recognize(imageData, {}, { pdf: true });
+      if (!ocrResult || !ocrResult.data || !ocrResult.data.pdf) {
+        throw new Error(`OCR failed for page ${i}`);
+      }
+
+      // Load single searchable page in PDF-Lib and merge
+      const pagePdfBytes = new Uint8Array(ocrResult.data.pdf);
+      const pagePdfDoc = await PDFLib.PDFDocument.load(pagePdfBytes);
+      const [copiedPage] = await finalPdf.copyPages(pagePdfDoc, [0]);
+      finalPdf.addPage(copiedPage);
+    }
+
+    setProgress(95, 'Saving searchable PDF…');
+    const finalPdfBytes = await finalPdf.save();
+    const base64Data = bufferToBase64(finalPdfBytes.buffer);
+
+    if (IS_E) {
+      const r = await kaivo.writeFile(savePath, base64Data);
+      hideProgress();
+      if (r.success) {
+        toast('Searchable OCR PDF created successfully!');
+        await addToLibrary(savePath, outName + '.pdf', finalPdfBytes.length);
+        closeConv();
+        // Load the new PDF in viewer automatically
+        await loadPDF(finalPdfBytes.buffer, outName + '.pdf', savePath);
+      } else {
+        toast('Failed to save file: ' + r.error);
+      }
+    } else {
+      const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = outName + '.pdf';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      hideProgress();
+      closeConv();
+      toast('OCR PDF downloaded!');
+    }
+  } catch (err) {
+    hideProgress();
+    console.error('OCR Convert failed:', err);
+    toast('OCR Convert failed: ' + err.message);
   }
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "kaivo-pdf",
   "productName": "Kaivo PDF",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Free PDF reader, editor, and converter",
   "main": "main.js",
   "author": "Kaivo",
@@ -32,6 +32,9 @@
       "icon.ico",
       "pdf-file-icon.ico",
       "installer.nsh"
+    ],
+    "extraResources": [
+      "pdf-file-icon.ico"
     ],
     "win": {
       "target": [
@@ -77,6 +80,8 @@
     "canvas": "^3.2.3",
     "mammoth": "^1.12.0",
     "pdf-lib": "^1.17.1",
-    "pdfkit": "^0.18.0"
+    "pdfjs-dist": "^3.11.174",
+    "pdfkit": "^0.18.0",
+    "tesseract.js": "^7.0.0"
   }
 }

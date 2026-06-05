@@ -555,7 +555,9 @@ ipcMain.handle('app:setDefault', async () => {
   if (process.platform !== 'win32') return { success:false, error:'Windows only' };
   try {
     const exe  = process.execPath;
-    const ico  = path.join(__dirname, 'pdf-file-icon.ico');
+    const ico  = app.isPackaged
+      ? path.join(process.resourcesPath, 'pdf-file-icon.ico')
+      : path.join(__dirname, 'pdf-file-icon.ico');
     const prog = 'KaivoPDF.pdf';
     const regCalls = [
       ['add', `HKCU\\Software\\Classes\\${prog}`, '/ve', '/t', 'REG_SZ', '/d', 'PDF Document', '/f'],
@@ -606,7 +608,9 @@ ipcMain.handle('app:removeDefault', async () => {
 ipcMain.handle('app:applyIcon', async () => {
   if (process.platform !== 'win32') return { success:false };
   try {
-    const ico  = path.join(__dirname, 'pdf-file-icon.ico');
+    const ico  = app.isPackaged
+      ? path.join(process.resourcesPath, 'pdf-file-icon.ico')
+      : path.join(__dirname, 'pdf-file-icon.ico');
     const prog = 'KaivoPDF.pdf';
     const regCalls = [
       ['add', `HKCU\\Software\\Classes\\${prog}`, '/ve', '/t', 'REG_SZ', '/d', 'PDF Document', '/f'],
