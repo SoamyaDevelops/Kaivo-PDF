@@ -3,10 +3,12 @@
 > **Free, local-first PDF reader, editor, and converter built on Electron.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)](#installation)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Web-blue.svg)](#installation)
 [![Electron](https://img.shields.io/badge/Electron-v42.3-green.svg)](https://www.electronjs.org)
 
 Kaivo PDF is a premium desktop application that brings a comprehensive suite of PDF tools directly to your machine. With a local-first philosophy, your documents never touch the cloud, ensuring complete privacy and fast offline processing.
+
+> **Note:** The application currently supports Windows and Web environments out of the box. Support for macOS and Linux is available on request.
 
 ---
 
@@ -16,7 +18,7 @@ Kaivo PDF is a premium desktop application that brings a comprehensive suite of 
 - **Fluid Layout**: Multi-page rendering with side-by-side or vertical scroll.
 - **Sidebar Thumbnail Strip**: Quick page navigation with visual previews.
 - **Zoom & Navigation**: Zoom in/out, custom scale adjustments, and single-click page flipping.
-- **Selectable Text**: Highlight, select, and copy text directly from documents.
+- **Selectable Text & Hybrid OCR**: Highlight, select, and copy text directly from digital PDFs, and automatically perform background OCR on-the-fly for scanned documents.
 - **Built-in Print & Download**: Print directly or export changes.
 
 ### ✍️ Text-to-PDF Rich Editor
@@ -26,6 +28,7 @@ Kaivo PDF is a premium desktop application that brings a comprehensive suite of 
 - **Page Layout Customization**: Select standard paper sizes (A4, A3, A5, Letter, Legal) and adjust margins (Normal, Narrow, Moderate, Wide, Minimal) with live page break backdrops.
 
 ### 🔄 Multi-Format File Converter
+- **Convert to OCR**: OCR scanned/non-selectable PDF documents to generate fully searchable PDF files.
 - **Image ➔ PDF**: Bundle multiple images (JPG, PNG, WEBP) into a single document.
 - **PDF ➔ Image**: Export PDF pages as separate PNG files.
 - **Merge & Split**: Combine multiple documents or slice a PDF into standalone pages.
@@ -63,17 +66,17 @@ npm start
 ```
 
 ### 4. Build Installers
-To package the app into single-file production installers for your platform:
+To package the app into single-file production installers (primarily optimized for Windows, with Web support; macOS and Linux available on request):
 
 * **Windows (NSIS & Portable x64)**
   ```bash
   npm run build:win
   ```
-* **macOS**
+* **macOS (On Request)**
   ```bash
   npm run build:mac
   ```
-* **Linux**
+* **Linux (On Request)**
   ```bash
   npm run build:linux
   ```
