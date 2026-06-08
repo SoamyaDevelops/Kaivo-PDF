@@ -72,14 +72,8 @@ To package the app into single-file production installers (primarily optimized f
   ```bash
   npm run build:win
   ```
-* **macOS (On Request)**
-  ```bash
-  npm run build:mac
-  ```
-* **Linux (On Request)**
-  ```bash
-  npm run build:linux
-  ```
+* **macOS** (On Request)
+* **Linux** (On Request)
 All output installers will be compiled into the `dist/` directory.
 
 ---

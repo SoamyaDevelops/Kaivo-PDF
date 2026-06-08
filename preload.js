@@ -56,6 +56,11 @@ contextBridge.exposeInMainWorld('kaivo', {
   exportPDFFromEditor: (savePath, pageSize, marginKey, margins) =>
     ipcRenderer.invoke('pdf:exportWithSize', savePath, pageSize, marginKey, margins),
 
+  // Printers & Print Customizations
+  getPrinters:         () => ipcRenderer.invoke('app:getPrinters'),
+  printPdfWithOptions: (opts) => ipcRenderer.invoke('pdf:printWithOptions', opts),
+  notifyPrintReady:    () => ipcRenderer.invoke('pdf:print-ready'),
+
   log: (msg) => ipcRenderer.send('log:message', msg),
 
   // Menu events (main -> renderer)

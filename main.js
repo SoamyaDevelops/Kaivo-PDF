@@ -240,7 +240,7 @@ function buildMenu() {
     { label: 'Help', submenu: [
       { label: 'About Kaivo PDF', click: () => dialog.showMessageBox(mainWin, {
           type:'info', title:'About Kaivo PDF',
-          message:'Kaivo PDF  v1.0.0',
+          message:'Kaivo PDF  v1.2.0',
           detail:'Free PDF reader, editor & converter.\nAll features free. No ads. No subscriptions.',
           buttons:['OK'], icon: path.join(__dirname,'icon.ico')
         })
@@ -498,26 +498,91 @@ ipcMain.handle('pdf:generateBuffer', async (e, pageSize) => {
   }
 });
 
-// ── IPC: Print a PDF buffer via hidden window (Kaivo-branded flow) ────────────
-ipcMain.handle('pdf:printBuffer', async (e, base64) => {
+// ── IPC: Get list of system printers ─────────────────────────────────────────
+ipcMain.handle('app:getPrinters', async () => {
+  try {
+    return await mainWin.webContents.getPrintersAsync();
+  } catch (err) {
+    console.error('[Main] getPrintersAsync error:', err);
+    return [];
+  }
+});
+
+// ── IPC: Print a PDF buffer via hidden window with advanced options ──────────
+ipcMain.handle('pdf:printWithOptions', async (e, opts) => {
+  const { base64, printerName, silent, copies, pageRanges, duplexMode, landscape, color, pageSize, scale } = opts;
   const tempPath = path.join(os.tmpdir(), `kaivo-print-${Date.now()}.pdf`);
+  
   try {
     fs.writeFileSync(tempPath, Buffer.from(base64, 'base64'));
+    
+    const isSilent = silent !== false;
+    
     const printWin = new BrowserWindow({
-      show: false,
+      show: !isSilent,
+      width: 800,
+      height: 600,
+      parent: isSilent ? null : mainWin,
+      modal: !isSilent,
       title: 'Print — Kaivo PDF',
-      webPreferences: { nodeIntegration: false, contextIsolation: true }
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        webSecurity: true,
+        sandbox: true
+      }
     });
-    await printWin.loadFile(tempPath);
+
+    await printWin.loadFile(path.join(__dirname, 'print.html'));
+
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        ipcMain.removeHandler('pdf:print-ready');
+        reject(new Error('Print preview generation timed out'));
+      }, 20000);
+
+      ipcMain.handleOnce('pdf:print-ready', () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+
+      printWin.webContents.send('init-print', {
+        pdfPath: tempPath,
+        pages: pageRanges,
+        landscape,
+        pageSize,
+        scale
+      });
+    });
+
+    const printOptions = {
+      silent: isSilent,
+      printBackground: true,
+      deviceName: printerName || '',
+      copies: parseInt(copies, 10) || 1,
+      color: color === 'color',
+      landscape: !!landscape,
+      pageSize: pageSize || 'A4',
+      margins: { marginType: 'none' }
+    };
+
+    if (duplexMode && duplexMode !== 'simplex') {
+      printOptions.duplexMode = duplexMode;
+    }
+
     return await new Promise(resolve => {
-      printWin.webContents.print({ silent: false, printBackground: true }, (success, failureReason) => {
+      printWin.webContents.print(printOptions, (success, failureReason) => {
+        console.log(`[Main] Print callback success: ${success}, failureReason: ${failureReason || 'none'}`);
         printWin.destroy();
         try { fs.unlinkSync(tempPath); } catch {}
         resolve({ success, error: failureReason || null });
       });
     });
+
   } catch (err) {
     try { fs.unlinkSync(tempPath); } catch {}
+    console.error('[Main] Printing failed:', err);
     return { success: false, error: err.message };
   }
 });

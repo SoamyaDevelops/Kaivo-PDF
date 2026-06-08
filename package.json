@@ -1,7 +1,7 @@
 {
   "name": "kaivo-pdf",
   "productName": "Kaivo PDF",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Free PDF reader, editor, and converter",
   "main": "main.js",
   "author": "Kaivo",

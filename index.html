@@ -303,88 +303,217 @@ body.dark .ocr-status-indicator {
 /* ── PDF.js loading state ─────────── */
 .pdfloading{display:flex;align-items:center;justify-content:center;height:140px;color:var(--muted);font-size:12px;gap:8px}
 
-/* PRINT / PDF capture: pages only — no chrome or toolbars */
-@media print{
-  #titlebar,#sidebar,#statusbar,#ctxbar,#editor-top,#editor-foot,
-  .page-break-line,.page-break-label,#toast,#modal,#print-preview{display:none!important}
-  .panel:not(#panel-editor){display:none!important}
-  #panel-editor{display:block!important;position:static!important;overflow:visible!important;padding:0!important}
-  #app,#body,#main,#panels{overflow:visible!important;height:auto!important;position:static!important;background:#fff!important}
-  #editor-scroll{padding:0!important;background:#fff!important;overflow:visible!important;display:block!important}
-  .editor-page-backdrop{background:#fff!important;box-shadow:none!important}
-  .editor-page{background:transparent!important;box-shadow:none!important;padding:0!important}
-  .kaivo-page-gap{height:0!important;margin:0!important;padding:0!important;page-break-before:always;break-before:page}
-  #rich{color:#17160F!important;min-height:unset}
+/* Print preview modal styling */
+#print-preview {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  padding: 20px;
 }
-html.print-capture-root,html.print-capture-root body{overflow:visible!important;height:auto!important;min-height:0!important}
-body.print-capture #titlebar,body.print-capture #sidebar,body.print-capture #statusbar,
-body.print-capture #ctxbar,body.print-capture #editor-top,body.print-capture #editor-foot,
-body.print-capture .page-break-line,body.print-capture .page-break-label,
-body.print-capture #toast,body.print-capture #modal,body.print-capture #print-preview{display:none!important}
-body.print-capture .panel:not(.on){display:none!important}
-body.print-capture #panel-editor{display:block!important;position:static!important;overflow:visible!important;padding:0!important;height:auto!important;min-height:0!important}
-body.print-capture #app,body.print-capture #body,body.print-capture #main,body.print-capture #panels{overflow:visible!important;height:auto!important;min-height:0!important;position:static!important;background:#fff!important}
-body.print-capture #editor-scroll{padding:0!important;background:#fff!important;overflow:visible!important;display:block!important;flex:unset!important;height:auto!important;max-height:none!important}
-body.print-capture #editor-wrap,body.print-capture #editor-page{height:auto!important;overflow:visible!important}
-body.print-capture #editor-page-backdrops{display:none!important}
-body.print-capture .editor-page-backdrop{background:#fff!important;box-shadow:none!important}
-body.print-capture .editor-page{background:transparent!important;padding:0!important}
-body.print-capture .kaivo-page-gap{height:0!important;margin:0!important;padding:0!important;border:0!important;page-break-before:always!important;break-before:page!important}
-body.print-capture #rich{color:#17160F!important;overflow:visible!important}
+#print-preview.show {
+  display: flex;
+}
+#print-preview-box {
+  background: var(--surface);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  width: min(980px, 98vw);
+  height: min(780px, 92vh);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .2);
+  overflow: hidden;
+}
+#print-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#print-preview-header h2 {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+}
+#print-preview-header span {
+  font-size: 11px;
+  color: var(--muted);
+}
+#print-preview-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
 
-/* Print preview modal */
-#print-preview{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:1001;padding:20px}
-#print-preview.show{display:flex}
-#print-preview-box{background:var(--surface);border-radius:10px;border:1px solid var(--border);width:min(920px,96vw);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.2);overflow:hidden}
-#print-preview-header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
-#print-preview-header h2{font-size:14px;font-weight:600;flex:1}
-#print-preview-header span{font-size:11px;color:var(--muted)}
-#print-preview-pages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;align-items:center;gap:16px;background:var(--bg)}
-.print-preview-page{background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.12);border-radius:2px;display:block;width:600px;max-width:100%;height:auto}
-#print-preview-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0}
+/* Sidebar Settings Panel */
+#print-settings-sidebar {
+  width: 320px;
+  padding: 20px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.print-setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.print-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.print-select, .print-input {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+.print-select:focus, .print-input:focus {
+  border-color: var(--accent);
+}
+.print-select {
+  cursor: pointer;
+}
 
-/* Styling for printing the print preview canvases */
-@media print {
-  body.printing-preview #titlebar,
-  body.printing-preview #sidebar,
-  body.printing-preview #statusbar,
-  body.printing-preview #ctxbar,
-  body.printing-preview .panel,
-  body.printing-preview #toast,
-  body.printing-preview #modal,
-  body.printing-preview #print-preview-header,
-  body.printing-preview #print-preview-footer {
-    display: none !important;
-  }
-  
-  body.printing-preview #app,
-  body.printing-preview #body,
-  body.printing-preview #main,
-  body.printing-preview #panels,
-  body.printing-preview #print-preview,
-  body.printing-preview #print-preview-box,
-  body.printing-preview #print-preview-pages {
-    display: block !important;
-    position: static !important;
-    overflow: visible !important;
-    background: #fff !important;
-    width: auto !important;
-    height: auto !important;
-    max-height: none !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-  
-  body.printing-preview .print-preview-page {
-    box-shadow: none !important;
-    border: none !important;
-    margin: 0 !important;
-    page-break-after: always !important;
-    break-after: page !important;
-    max-width: 100% !important;
-    display: block !important;
-  }
+/* Right Preview Container */
+#print-preview-pages-container {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  min-height: 0;
+}
+#print-preview-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+.print-preview-sheet {
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .15);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.print-preview-canvas {
+  display: block;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  max-width: none !important;
+}
+
+/* Footer style */
+#print-preview-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+
+/* Canvas Inversion & Page Rotation feature */
+#viewer-scroll.invert-pages .pdfpage canvas {
+  filter: invert(0.9) hue-rotate(180deg);
+}
+
+/* Print Capture Overrides (Hide UI elements during editor print/export capture) */
+body.print-capture #titlebar,
+body.print-capture #sidebar,
+body.print-capture #ctxbar,
+body.print-capture #statusbar,
+body.print-capture #editor-top,
+body.print-capture #editor-foot,
+body.print-capture #toast,
+body.print-capture #overlay,
+body.print-capture #modal,
+body.print-capture #lib-del-modal,
+body.print-capture #print-preview,
+body.print-capture #editor-page-backdrops,
+body.print-capture .page-break-line {
+  display: none !important;
+}
+
+body.print-capture,
+body.print-capture #app,
+body.print-capture #body,
+body.print-capture #main,
+body.print-capture #panels,
+body.print-capture #panel-editor {
+  display: block !important;
+  background: #fff !important;
+  color: #000 !important;
+  width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
+  position: static !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+body.print-capture #editor-scroll {
+  display: block !important;
+  overflow: visible !important;
+  height: auto !important;
+  width: 100% !important;
+  background: #fff !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+body.print-capture #editor-wrap {
+  display: block !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  background: #fff !important;
+}
+
+body.print-capture #editor-page {
+  box-shadow: none !important;
+  border: none !important;
+  background: #fff !important;
+  /* Keep inline width and inline padding (margins on the page) */
+}
+
+body.print-capture #rich {
+  color: #000 !important;
+  background: transparent !important;
 }
 </style>
 </head>
@@ -451,6 +580,9 @@ body.print-capture #rich{color:#17160F!important;overflow:visible!important}
       <span id="zval">100%</span>
       <button class="zbtn" onclick="chzoom(10)" title="Zoom in">+</button>
     </div>
+    <div class="ctxsep"></div>
+    <button class="ctxbtn" id="btn-rotate" onclick="rotatePages()" disabled><i class="ti ti-rotate-clockwise"></i> Rotate</button>
+    <button class="ctxbtn" id="btn-invert" onclick="toggleInvertColors()" disabled><i class="ti ti-eye-off"></i> Invert Colors</button>
     <div class="ctxsep"></div>
     <button class="ctxbtn" onclick="doPrint()" id="btn-print" disabled><i class="ti ti-printer"></i> Print</button>
     <button class="ctxbtn prim" onclick="doDownload()" id="btn-dl" disabled><i class="ti ti-download"></i> Download</button>
@@ -852,15 +984,109 @@ body.print-capture #rich{color:#17160F!important;overflow:visible!important}
 
 <div id="print-preview">
   <div id="print-preview-box">
+    <!-- Header -->
     <div id="print-preview-header">
-      <h2>Print Preview</h2>
-      <span>Kaivo PDF</span>
+      <h2>Print Document</h2>
+      <span id="print-doc-title">Kaivo PDF</span>
       <button class="tbtn" onclick="closePrintPreview()" title="Close"><i class="ti ti-x"></i></button>
     </div>
-    <div id="print-preview-pages"></div>
+    
+    <!-- Body Content with sidebar layout -->
+    <div id="print-preview-body">
+      <!-- Left sidebar: Settings -->
+      <div id="print-settings-sidebar">
+        <!-- Destination -->
+        <div class="print-setting-group">
+          <label class="print-label" for="print-printer-select">Destination</label>
+          <select id="print-printer-select" class="print-select">
+            <option value="">Default Printer</option>
+          </select>
+        </div>
+        
+        <!-- Copies -->
+        <div class="print-setting-group">
+          <label class="print-label" for="print-copies">Copies</label>
+          <input type="number" id="print-copies" value="1" min="1" max="99" class="print-input">
+        </div>
+        
+        <!-- Pages -->
+        <div class="print-setting-group">
+          <label class="print-label" for="print-pages-select">Pages</label>
+          <select id="print-pages-select" class="print-select" onchange="togglePrintPagesInput()">
+            <option value="all">All pages</option>
+            <option value="current">Current page</option>
+            <option value="custom">Custom range</option>
+          </select>
+          <input type="text" id="print-pages-range" class="print-input" placeholder="e.g. 1-5, 8, 11-13" style="display:none; margin-top:6px;">
+        </div>
+
+        <!-- Layout / Orientation -->
+        <div class="print-setting-group">
+          <label class="print-label" for="print-layout-select">Layout</label>
+          <select id="print-layout-select" class="print-select">
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </div>
+
+        <!-- Color -->
+        <div class="print-setting-group">
+          <label class="print-label" for="print-color-select">Color</label>
+          <select id="print-color-select" class="print-select">
+            <option value="color">Color</option>
+            <option value="mono">Black and white</option>
+          </select>
+        </div>
+
+        <!-- Paper Size -->
+        <div class="print-setting-group">
+          <label class="print-label" for="print-paper-select">Paper size</label>
+          <select id="print-paper-select" class="print-select">
+            <option value="A4">A4</option>
+            <option value="Letter">Letter</option>
+            <option value="Legal">Legal</option>
+            <option value="A3">A3</option>
+            <option value="A5">A5</option>
+            <option value="Tabloid">Tabloid</option>
+          </select>
+        </div>
+
+        <!-- Scale / Printable Area -->
+        <div class="print-setting-group">
+          <label class="print-label" for="print-scale-select">Scale</label>
+          <select id="print-scale-select" class="print-select" onchange="togglePrintScaleInput()">
+            <option value="fit">Fit to printable area</option>
+            <option value="actual">Actual size</option>
+            <option value="custom">Custom percentage</option>
+          </select>
+          <div id="print-scale-custom-wrap" style="display:none; align-items:center; gap:6px; margin-top:6px;">
+            <input type="number" id="print-scale-custom" value="100" min="10" max="400" class="print-input" style="width:70px;">
+            <span>%</span>
+          </div>
+        </div>
+
+        <!-- Duplex / Double sided -->
+        <div class="print-setting-group">
+          <label class="print-label" for="print-duplex-select">Two-sided</label>
+          <select id="print-duplex-select" class="print-select">
+            <option value="simplex">Print on one side</option>
+            <option value="longEdge">Print on both sides (flip on long edge)</option>
+            <option value="shortEdge">Print on both sides (flip on short edge)</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Right panel: Preview container -->
+      <div id="print-preview-pages-container">
+        <div id="print-preview-pages"></div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
     <div id="print-preview-footer">
       <button class="btng" onclick="closePrintPreview()">Cancel</button>
-      <button class="btnp" onclick="executePrint()"><i class="ti ti-printer"></i> Print</button>
+      <button class="btnp" id="print-action-btn" onclick="executeCustomPrint()"><i class="ti ti-printer"></i> Print</button>
+      <button class="btng" style="margin-left: auto;" onclick="executeSystemPrint()"><i class="ti ti-external-link"></i> System Print...</button>
     </div>
   </div>
 </div>
@@ -921,6 +1147,8 @@ let convMulti    = false;
 let autoSaveTimer= null;
 let modalCb      = null;
 let darkMode     = false;
+let viewerRotation = 0;
+let invertPages    = false;
 
 // Paper sizes in mm
 const PAPER_SIZES = {
@@ -1042,7 +1270,7 @@ async function doOpenFile() {
 
 // ── CLOSE FILE ────────────────────────────────────────────
 function closeFile() {
-  pdfDoc = null; totalPages = 0; curPage = 1;
+  pdfDoc = null; totalPages = 0; curPage = 1; viewerRotation = 0;
   openedPath = null; openedName = ''; openedData = null;
   document.getElementById('doctitle').textContent = 'No file open';
   document.getElementById('currfn').textContent   = 'No file open';
@@ -1060,6 +1288,7 @@ function closeFile() {
 // ── LOAD PDF ──────────────────────────────────────────────
 async function loadPDF(buffer, name, filePath) {
   try {
+    viewerRotation = 0;
     openedData = buffer;
     openedPath = filePath;
     openedName = name;
@@ -1116,8 +1345,9 @@ async function renderPage(pageNum) {
   const page = await pdfDoc.getPage(pageNum);
   const dpr = window.devicePixelRatio || 1;
   const renderScale = zoom * dpr;
-  const vp    = page.getViewport({ scale: zoom });
-  const hiVP  = page.getViewport({ scale: renderScale });
+  const pageRotate = page.rotate || page.rotation || 0;
+  const vp    = page.getViewport({ scale: zoom, rotation: (pageRotate + viewerRotation) % 360 });
+  const hiVP  = page.getViewport({ scale: renderScale, rotation: (pageRotate + viewerRotation) % 360 });
 
   const wrap = document.createElement('div');
   wrap.className = 'pdfpage';
@@ -1201,9 +1431,34 @@ function updatePageIndicator() {
 }
 
 function setViewerBtns(on) {
-  ['btn-prev','btn-next','btn-print','btn-dl'].forEach(id => {
+  ['btn-prev','btn-next','btn-print','btn-dl','btn-rotate','btn-invert'].forEach(id => {
     const b = document.getElementById(id); if(b) b.disabled = !on;
   });
+}
+
+async function rotatePages() {
+  if (!pdfDoc) return;
+  viewerRotation = (viewerRotation + 90) % 360;
+  reRenderAll();
+}
+
+function toggleInvertColors() {
+  invertPages = !invertPages;
+  const scroll = document.getElementById('viewer-scroll');
+  const btn = document.getElementById('btn-invert');
+  if (invertPages) {
+    scroll.classList.add('invert-pages');
+    if (btn) {
+      btn.classList.add('prim');
+      btn.innerHTML = '<i class="ti ti-eye"></i> Normal Pages';
+    }
+  } else {
+    scroll.classList.remove('invert-pages');
+    if (btn) {
+      btn.classList.remove('prim');
+      btn.innerHTML = '<i class="ti ti-eye-off"></i> Invert Colors';
+    }
+  }
 }
 
 document.getElementById('viewer-scroll').addEventListener('scroll', () => {
@@ -1266,79 +1521,400 @@ async function setPrintCapture(on) {
     document.body.classList.add('print-capture');
     document.querySelectorAll('.page-break-line').forEach(b => { b.style.display = 'none'; });
     updateEditorPages();
+    
+    // Adjust spacer heights to remove the screen-only page gap (24px)
+    document.querySelectorAll('.kaivo-page-gap').forEach(gap => {
+      const h = parseFloat(gap.style.height);
+      if (!isNaN(h)) {
+        gap.setAttribute('data-orig-h', h);
+        gap.style.height = (h - 24) + 'px';
+      }
+    });
+
     const scroll = document.getElementById('editor-scroll');
     if (scroll) scroll.scrollTop = 0;
-    const { size, margins: mg } = getEditorConfig();
+    const { size } = getEditorConfig();
     const ps = PAPER_SIZES[size] || PAPER_SIZES.A4;
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = 'print-capture-style';
       document.head.appendChild(styleEl);
     }
-    styleEl.textContent = `@media print { @page{size:${ps.w}mm ${ps.h}mm;margin:${mg.top}mm ${mg.right}mm ${mg.bottom}mm ${mg.left}mm} }`;
+    // Set page size with margin: 0 to keep padding margins inside the document page
+    styleEl.textContent = `@media print { @page{size:${ps.w}mm ${ps.h}mm;margin:0} }`;
   } else {
     document.documentElement.classList.remove('print-capture-root');
     document.body.classList.remove('print-capture');
     if (styleEl) styleEl.textContent = '';
+    
+    // Restore spacer heights
+    document.querySelectorAll('.kaivo-page-gap').forEach(gap => {
+      const orig = gap.getAttribute('data-orig-h');
+      if (orig) {
+        gap.style.height = orig + 'px';
+        gap.removeAttribute('data-orig-h');
+      }
+    });
+
     document.querySelectorAll('.page-break-line').forEach(b => { b.style.display = ''; });
   }
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   if (on) await new Promise(r => setTimeout(r, 80));
 }
 
-async function showPrintPreview(base64) {
-  printPreviewData = base64;
-  const container = document.getElementById('print-preview-pages');
-  container.innerHTML = '<div class="pdfloading">Loading preview…</div>';
-  document.getElementById('print-preview').classList.add('show');
+function parsePageRange(rangeStr, maxPages) {
+  if (!rangeStr || rangeStr.trim() === '') return [];
+  const pages = new Set();
+  const parts = rangeStr.split(',');
+  for (let part of parts) {
+    part = part.trim();
+    if (part.includes('-')) {
+      const [startStr, endStr] = part.split('-');
+      const start = parseInt(startStr, 10);
+      const end = parseInt(endStr, 10);
+      if (!isNaN(start) && !isNaN(end)) {
+        const min = Math.min(start, end);
+        const max = Math.max(start, end);
+        for (let i = min; i <= max; i++) {
+          if (i >= 1 && i <= maxPages) {
+            pages.add(i);
+          }
+        }
+      }
+    } else {
+      const page = parseInt(part, 10);
+      if (!isNaN(page) && page >= 1 && page <= maxPages) {
+        pages.add(page);
+      }
+    }
+  }
+  return Array.from(pages).sort((a, b) => a - b);
+}
 
+function togglePrintPagesInput() {
+  const select = document.getElementById('print-pages-select').value;
+  const range = document.getElementById('print-pages-range');
+  if (select === 'custom') {
+    range.style.display = 'block';
+    range.focus();
+  } else {
+    range.style.display = 'none';
+  }
+  updatePrintPreviewSelection();
+}
+
+function togglePrintScaleInput() {
+  const select = document.getElementById('print-scale-select').value;
+  const wrap = document.getElementById('print-scale-custom-wrap');
+  if (select === 'custom') {
+    wrap.style.display = 'flex';
+    document.getElementById('print-scale-custom').focus();
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+let printPagesList = [];
+
+const PAPER_ASPECT_RATIOS = {
+  'A4': 210 / 297,
+  'Letter': 215.9 / 279.4,
+  'Legal': 215.9 / 355.6,
+  'A3': 297 / 420,
+  'A5': 148 / 210,
+  'Tabloid': 279.4 / 431.8
+};
+
+const PAPER_DIMENSIONS = {
+  'A4': { w: 210, h: 297 },
+  'Letter': { w: 215.9, h: 279.4 },
+  'Legal': { w: 215.9, h: 355.6 },
+  'A3': { w: 297, h: 420 },
+  'A5': { w: 148, h: 210 },
+  'Tabloid': { w: 279.4, h: 431.8 }
+};
+
+async function updatePrintPreviewSelection() {
+  if (!printPreviewData) return;
+  
+  const pagesSelect = document.getElementById('print-pages-select').value;
+  const pagesRangeInput = document.getElementById('print-pages-range').value;
+  const layoutSelect = document.getElementById('print-layout-select').value;
+  const scaleSelect = document.getElementById('print-scale-select').value;
+  const customScale = parseInt(document.getElementById('print-scale-custom').value, 10) || 100;
+  const paperSelect = document.getElementById('print-paper-select').value;
+  
+  const container = document.getElementById('print-preview-pages');
+  container.innerHTML = '<div class="pdfloading">Updating preview…</div>';
+  
   try {
-    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const bytes = Uint8Array.from(atob(printPreviewData), c => c.charCodeAt(0));
     const doc = await pdfjsLib.getDocument({ data: bytes }).promise;
+    const maxPages = doc.numPages;
+    
+    let targetPages = [];
+    if (pagesSelect === 'all') {
+      for (let i = 1; i <= maxPages; i++) targetPages.push(i);
+    } else if (pagesSelect === 'current') {
+      const target = (curPage >= 1 && curPage <= maxPages) ? curPage : 1;
+      targetPages.push(target);
+    } else if (pagesSelect === 'custom') {
+      targetPages = parsePageRange(pagesRangeInput, maxPages);
+    }
+    
+    printPagesList = targetPages;
     container.innerHTML = '';
-    for (let i = 1; i <= doc.numPages; i++) {
-      const page = await doc.getPage(i);
-      const viewport = page.getViewport({ scale: 3.0 });
+    
+    if (targetPages.length === 0) {
+      container.innerHTML = '<div class="pdfloading" style="color:var(--accent); font-weight: 500; margin-top: 20px;">No valid pages selected</div>';
+      return;
+    }
+    
+    const isLandscape = layoutSelect === 'landscape';
+    const paperDim = PAPER_DIMENSIONS[paperSelect] || { w: 210, h: 297 };
+    const paperW = isLandscape ? paperDim.h : paperDim.w;
+    const paperH = isLandscape ? paperDim.w : paperDim.h;
+    
+    const maxW = 450;
+    const maxH = 450;
+    const paperRatio = paperW / paperH;
+    
+    let sheetWidth, sheetHeight;
+    if (paperRatio >= 1) {
+      sheetWidth = maxW;
+      sheetHeight = Math.round(maxW / paperRatio);
+      if (sheetHeight > maxH) {
+        sheetHeight = maxH;
+        sheetWidth = Math.round(maxH * paperRatio);
+      }
+    } else {
+      sheetHeight = maxH;
+      sheetWidth = Math.round(maxH * paperRatio);
+      if (sheetWidth > maxW) {
+        sheetWidth = maxW;
+        sheetHeight = Math.round(maxW / paperRatio);
+      }
+    }
+    
+    const pxPerMm = sheetWidth / paperW;
+    
+    for (let pageNum of targetPages) {
+      const page = await doc.getPage(pageNum);
+      const pageRotate = page.rotate || page.rotation || 0;
+      
+      let rot = pageRotate;
+      const viewportNormal = page.getViewport({ scale: 1.0, rotation: pageRotate });
+      if (isLandscape && viewportNormal.width < viewportNormal.height) {
+        rot = (rot + 90) % 360;
+      } else if (!isLandscape && viewportNormal.width > viewportNormal.height) {
+        rot = (rot + 90) % 360;
+      }
+      
+      const pageViewport = page.getViewport({ scale: 1.0, rotation: rot });
+      const pageW = pageViewport.width;
+      const pageH = pageViewport.height;
+      const pageWMm = pageW * 25.4 / 72;
+      const pageHMm = pageH * 25.4 / 72;
+      
+      let scaleFactor = 1.0;
+      if (scaleSelect === 'fit') {
+        scaleFactor = Math.min(paperW / pageWMm, paperH / pageHMm);
+      } else if (scaleSelect === 'actual') {
+        scaleFactor = 1.0;
+      } else if (scaleSelect === 'custom') {
+        scaleFactor = customScale / 100;
+      }
+      
+      const canvasDisplayWidth = Math.round(pageWMm * scaleFactor * pxPerMm);
+      const canvasDisplayHeight = Math.round(pageHMm * scaleFactor * pxPerMm);
+      
+      const sheet = document.createElement('div');
+      sheet.className = 'print-preview-sheet';
+      sheet.style.width = sheetWidth + 'px';
+      sheet.style.height = sheetHeight + 'px';
+      
+      const viewport = page.getViewport({ scale: 1.5, rotation: rot });
       const canvas = document.createElement('canvas');
-      canvas.className = 'print-preview-page';
+      canvas.className = 'print-preview-canvas';
       canvas.width = viewport.width;
       canvas.height = viewport.height;
+      canvas.style.width = canvasDisplayWidth + 'px';
+      canvas.style.height = canvasDisplayHeight + 'px';
+      
+      sheet.appendChild(canvas);
+      container.appendChild(sheet);
+      
       await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-      container.appendChild(canvas);
     }
   } catch (err) {
     container.innerHTML = '<div class="pdfloading">Preview failed: ' + err.message + '</div>';
   }
 }
 
+function updatePrinterOptionStates() {
+  const printerSelect = document.getElementById('print-printer-select');
+  const printerName = printerSelect.value || '';
+  const isPdfPrinter = printerName.toLowerCase().includes('pdf');
+  
+  const duplexSelect = document.getElementById('print-duplex-select');
+  const scaleSelect = document.getElementById('print-scale-select');
+  const scaleCustomWrap = document.getElementById('print-scale-custom-wrap');
+  
+  if (isPdfPrinter) {
+    duplexSelect.disabled = true;
+    duplexSelect.value = 'simplex';
+    
+    scaleSelect.disabled = true;
+    scaleSelect.value = 'fit';
+    scaleCustomWrap.style.display = 'none';
+  } else {
+    duplexSelect.disabled = false;
+    scaleSelect.disabled = false;
+    togglePrintScaleInput();
+  }
+}
+
+async function showPrintPreview(base64) {
+  printPreviewData = base64;
+  
+  document.getElementById('print-doc-title').textContent = openedName || 'Kaivo Document';
+  document.getElementById('print-preview').classList.add('show');
+  
+  // Reset print options
+  document.getElementById('print-copies').value = 1;
+  document.getElementById('print-pages-select').value = 'all';
+  document.getElementById('print-pages-range').value = '';
+  document.getElementById('print-pages-range').style.display = 'none';
+  document.getElementById('print-layout-select').value = 'portrait';
+  document.getElementById('print-color-select').value = 'color';
+  document.getElementById('print-paper-select').value = 'A4';
+  document.getElementById('print-scale-select').value = 'fit';
+  document.getElementById('print-scale-custom').value = 100;
+  document.getElementById('print-scale-custom-wrap').style.display = 'none';
+  document.getElementById('print-duplex-select').value = 'simplex';
+  
+  const printerSelect = document.getElementById('print-printer-select');
+  printerSelect.innerHTML = '<option value="">Default Printer</option>';
+  
+  try {
+    if (IS_E) {
+      const printers = await kaivo.getPrinters();
+      let defaultPrinter = null;
+      printers.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name + (p.isDefault ? ' (Default)' : '');
+        if (p.isDefault) defaultPrinter = p.name;
+        printerSelect.appendChild(opt);
+      });
+      if (defaultPrinter) printerSelect.value = defaultPrinter;
+    }
+  } catch (err) {
+    console.error('Failed to get printers:', err);
+  }
+  
+  // Bind all settings changes to refresh preview
+  document.getElementById('print-printer-select').onchange = () => {
+    updatePrinterOptionStates();
+    updatePrintPreviewSelection();
+  };
+  document.getElementById('print-pages-range').oninput = () => updatePrintPreviewSelection();
+  document.getElementById('print-layout-select').onchange = () => updatePrintPreviewSelection();
+  document.getElementById('print-scale-select').onchange = () => {
+    togglePrintScaleInput();
+    updatePrintPreviewSelection();
+  };
+  document.getElementById('print-scale-custom').oninput = () => updatePrintPreviewSelection();
+  document.getElementById('print-paper-select').onchange = () => updatePrintPreviewSelection();
+  
+  updatePrinterOptionStates();
+  await updatePrintPreviewSelection();
+}
+
 function closePrintPreview() {
   document.getElementById('print-preview').classList.remove('show');
   printPreviewData = null;
+  printPagesList = [];
 }
 
-async function executePrint() {
+async function executeCustomPrint() {
   if (!printPreviewData) return;
+  if (printPagesList.length === 0) {
+    toast('No valid pages selected for printing');
+    return;
+  }
   
-  // Inject temporary print margins override style to set page margin to 0 for print preview canvases
-  let printStyle = document.createElement('style');
-  printStyle.id = 'canvas-print-margin-style';
-  printStyle.textContent = `@media print { @page { margin: 0 !important; } }`;
-  document.head.appendChild(printStyle);
-
-  // Add printing class to body to isolate the preview pages for printer
-  document.body.classList.add('printing-preview');
+  const printerSelect = document.getElementById('print-printer-select');
+  const printerName = printerSelect.value;
+  const copies = parseInt(document.getElementById('print-copies').value, 10) || 1;
+  const landscape = document.getElementById('print-layout-select').value === 'landscape';
+  const color = document.getElementById('print-color-select').value;
+  const pageSize = document.getElementById('print-paper-select').value;
+  const scaleSelect = document.getElementById('print-scale-select').value;
+  const customScale = parseInt(document.getElementById('print-scale-custom').value, 10) || 100;
+  const duplexMode = document.getElementById('print-duplex-select').value;
   
-  // Open the standard system print dialog
-  window.print();
-  
-  // Remove printing class to restore normal UI view
-  document.body.classList.remove('printing-preview');
-  
-  // Clean up print style
-  printStyle.remove();
-
-  toast('Sent to printer');
+  const b64Data = printPreviewData;
+  const pages = [...printPagesList];
+  toast('Sending job to printer…');
   closePrintPreview();
+  
+  try {
+    const res = await kaivo.printPdfWithOptions({
+      base64: b64Data,
+      printerName,
+      silent: true,
+      copies,
+      pageRanges: pages,
+      duplexMode,
+      landscape,
+      color,
+      pageSize,
+      scale: scaleSelect === 'custom' ? customScale : 100
+    });
+    
+    if (res && res.success) {
+      toast('Print job sent successfully');
+    } else {
+      toast('Print failed: ' + (res && res.error ? res.error : 'Printer error'));
+    }
+  } catch (err) {
+    toast('Print error: ' + err.message);
+  }
+}
+
+async function executeSystemPrint() {
+  if (!printPreviewData) return;
+  if (printPagesList.length === 0) {
+    toast('No valid pages selected for printing');
+    return;
+  }
+  
+  const b64Data = printPreviewData;
+  const pages = [...printPagesList];
+  toast('Opening system print dialog…');
+  closePrintPreview();
+  
+  try {
+    const res = await kaivo.printPdfWithOptions({
+      base64: b64Data,
+      printerName: '',
+      silent: false,
+      copies: 1,
+      pageRanges: pages,
+      duplexMode: 'simplex',
+      landscape: false,
+      color: 'color',
+      pageSize: 'A4',
+      scale: 100
+    });
+    
+    if (res && !res.success) {
+      toast('System print failed: ' + (res.error ? res.error : 'Unknown error'));
+    }
+  } catch (err) {
+    toast('System print error: ' + err.message);
+  }
 }
 
 async function doPrint() {
@@ -1350,6 +1926,7 @@ async function doPrint() {
   try {
     if (isEditor) {
       toast('Preparing print preview…');
+      cleanUpEditorContent();
       await setPrintCapture(true);
       try {
         const { size } = getEditorConfig();
@@ -1605,6 +2182,7 @@ function getEditorConfig() {
 }
 
 function updateEditorLayout() {
+  cleanUpEditorContent();
   const { pageW, pageH, padT, padR, padB, padL, size, margins: mg } = getEditorConfig();
   const wrap   = document.getElementById('editor-wrap');
   const pageEl = document.getElementById('editor-page');
@@ -1626,35 +2204,235 @@ function updateEditorLayout() {
   scheduleEditorPages();
 }
 
+function getNodeHeight(node) {
+  if (node.nodeType !== 1) return 0;
+  const rect = node.getBoundingClientRect();
+  let h = rect.height;
+  if (!h) h = node.offsetHeight || 0;
+  try {
+    const style = window.getComputedStyle(node);
+    const mt = parseFloat(style.marginTop) || 0;
+    const mb = parseFloat(style.marginBottom) || 0;
+    return h + mt + mb;
+  } catch (e) {
+    return h;
+  }
+}
+
+function findSplitBr(el) {
+  const hasContent = el.textContent.trim().length > 0 || el.querySelector('img, table');
+  if (!hasContent) return null;
+  
+  const brs = el.querySelectorAll('br');
+  for (const br of brs) {
+    let p = br.parentNode;
+    let eligible = true;
+    while (p && p !== el) {
+      const t = p.tagName;
+      if (['TABLE', 'UL', 'OL', 'LI', 'TR', 'TD', 'TH'].includes(t)) {
+        eligible = false;
+        break;
+      }
+      p = p.parentNode;
+    }
+    if (eligible) return br;
+  }
+  return null;
+}
+
+function splitElementAtBr(el) {
+  const br = findSplitBr(el);
+  if (!br) return false;
+  
+  let current = br;
+  while (current !== el) {
+    const parent = current.parentNode;
+    if (!parent) break;
+    
+    const clone = parent.cloneNode(false);
+    
+    let sibling = current;
+    while (sibling) {
+      const next = sibling.nextSibling;
+      clone.appendChild(sibling);
+      sibling = next;
+    }
+    
+    parent.parentNode.insertBefore(clone, parent.nextSibling);
+    
+    if (current === br) {
+      br.remove();
+    }
+    
+    if (parent === el) {
+      if (parent.childNodes.length === 0) {
+        parent.appendChild(document.createElement('br'));
+      }
+      if (clone.childNodes.length === 0) {
+        clone.appendChild(document.createElement('br'));
+      }
+      break;
+    }
+    
+    current = clone;
+  }
+  return true;
+}
+
+function cleanUpEditorContent() {
+  const rich = document.getElementById('rich');
+  let changed = false;
+
+  const STANDARD_BLOCKS = ['P', 'TABLE', 'UL', 'OL', 'IMG', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR', 'BLOCKQUOTE', 'PRE', 'DIV'];
+
+  function hasBlockChildren(node) {
+    if (node.nodeType !== 1) return false;
+    return Array.from(node.querySelectorAll('*')).some(el => 
+      STANDARD_BLOCKS.includes(el.tagName) || el.tagName === 'DIV'
+    );
+  }
+
+  let i = 0;
+  while (i < rich.childNodes.length) {
+    const child = rich.childNodes[i];
+    if (child.nodeType === 1) {
+      const tag = child.tagName;
+      
+      if (child.classList.contains('kaivo-page-gap')) {
+        i++;
+        continue;
+      }
+
+      const isWrapper = hasBlockChildren(child) || 
+                        (!STANDARD_BLOCKS.includes(tag) && tag !== 'DIV' && child.querySelector('*'));
+
+      if (isWrapper) {
+        while (child.firstChild) {
+          rich.insertBefore(child.firstChild, child);
+        }
+        child.remove();
+        changed = true;
+      } else if (tag === 'DIV') {
+        const p = document.createElement('p');
+        while (child.firstChild) {
+          p.appendChild(child.firstChild);
+        }
+        rich.replaceChild(p, child);
+        changed = true;
+        i++;
+      } else {
+        i++;
+      }
+    } else {
+      i++;
+    }
+  }
+
+  let currentGroup = [];
+  const nodesForPhase2 = Array.from(rich.childNodes);
+  for (let i = 0; i < nodesForPhase2.length; i++) {
+    const node = nodesForPhase2[i];
+    const isBlock = node.nodeType === 1 && (
+      STANDARD_BLOCKS.includes(node.tagName) || 
+      node.classList.contains('kaivo-page-gap')
+    );
+
+    if (isBlock) {
+      if (currentGroup.length > 0) {
+        const hasContent = currentGroup.some(item => 
+          item.nodeType !== 3 || item.textContent.trim().length > 0
+        );
+        if (hasContent) {
+          const p = document.createElement('p');
+          rich.insertBefore(p, currentGroup[0]);
+          for (const item of currentGroup) {
+            p.appendChild(item);
+          }
+          changed = true;
+        } else {
+          for (const item of currentGroup) {
+            item.remove();
+          }
+        }
+        currentGroup = [];
+      }
+    } else {
+      currentGroup.push(node);
+    }
+  }
+  
+  if (currentGroup.length > 0) {
+    const hasContent = currentGroup.some(item => 
+      item.nodeType !== 3 || item.textContent.trim().length > 0
+    );
+    if (hasContent) {
+      const p = document.createElement('p');
+      rich.insertBefore(p, currentGroup[0]);
+      for (const item of currentGroup) {
+        p.appendChild(item);
+      }
+      changed = true;
+    } else {
+      for (const item of currentGroup) {
+        item.remove();
+      }
+    }
+  }
+
+  let splitOccurred = false;
+  const nodesForPhase3 = Array.from(rich.childNodes);
+  for (const node of nodesForPhase3) {
+    if (node.nodeType === 1 && !node.classList.contains('kaivo-page-gap')) {
+      if (splitElementAtBr(node)) {
+        splitOccurred = true;
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    cleanUpEditorContent();
+  }
+}
+
 function syncPageGapSpacers() {
   const rich = document.getElementById('rich');
   rich.querySelectorAll('.kaivo-page-gap').forEach(el => el.remove());
 
   const { contentH, padT, padB } = getEditorConfig();
   const spacerH = padB + EDITOR_PAGE_GAP + padT;
-  if (spacerH < 4) return;
+  if (spacerH < 4) return 1;
 
   let used = 0;
+  let pageCount = 1;
   const nodes = Array.from(rich.childNodes);
   for (const node of nodes) {
     if (node.nodeType !== 1) continue;
     if (node.classList && node.classList.contains('kaivo-page-gap')) continue;
-    const h = node.offsetHeight || 0;
+    const h = getNodeHeight(node);
     if (!h) continue;
 
-    if (used > 0 && used + h > contentH) {
+    if (used > 0 && used + h > contentH + 1.5) {
       const spacer = document.createElement('div');
       spacer.className = 'kaivo-page-gap';
       spacer.setAttribute('contenteditable', 'false');
       spacer.style.cssText = 'height:' + spacerH + 'px;pointer-events:none;';
       spacer.setAttribute('data-kaivo-gap', '1');
       rich.insertBefore(spacer, node);
+      pageCount++;
       used = h;
     } else {
       used += h;
     }
-    while (used >= contentH) used -= contentH;
+
+    if (used > contentH + 1.5) {
+      const overflow = used - contentH;
+      const extraPages = Math.ceil(overflow / contentH);
+      pageCount += extraPages;
+      used = overflow - (extraPages - 1) * contentH;
+    }
   }
+  return pageCount;
 }
 
 function updateEditorPages() {
@@ -1666,11 +2444,9 @@ function updateEditorPages() {
   const backdrops = document.getElementById('editor-page-backdrops');
   const rich = document.getElementById('rich');
 
-  syncPageGapSpacers();
+  const numPages = syncPageGapSpacers();
 
   const spacerH = padB + EDITOR_PAGE_GAP + padT;
-  let numPages = Math.max(1, Math.ceil(rich.scrollHeight / contentH));
-  numPages = Math.max(numPages, rich.querySelectorAll('.kaivo-page-gap').length + 1);
   const backdropH = numPages * pageH + (numPages - 1) * EDITOR_PAGE_GAP;
   const flowH = padT + numPages * contentH + (numPages - 1) * spacerH + padB;
 
@@ -1795,6 +2571,7 @@ async function exportPDF() {
     });
     if(!savePath) return;
 
+    cleanUpEditorContent();
     await setPrintCapture(true);
     toast('Generating PDF…');
     try {
@@ -1846,7 +2623,7 @@ function scheduleEditorPagesDebounced() {
   if (editorPagesTimeout) clearTimeout(editorPagesTimeout);
   editorPagesTimeout = setTimeout(() => {
     updateEditorPages();
-  }, 800); // 800ms debounce for typing
+  }, 100); // 100ms debounce for typing
 }
 
 function isAtStartOfBlock(range, block) {
@@ -1886,6 +2663,12 @@ function isEmptyBlock(block) {
 }
 
 document.getElementById('rich').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    setTimeout(() => {
+      updateEditorPages();
+    }, 0);
+    return;
+  }
   if (e.key !== 'Backspace') return;
   
   const sel = window.getSelection();
@@ -1964,9 +2747,13 @@ document.getElementById('rich').addEventListener('keydown', (e) => {
 
 // Update page stack on typing and when content size changes
 document.getElementById('rich').addEventListener('input', () => { scheduleEditorPagesDebounced(); }, { passive: true });
-if (typeof ResizeObserver !== 'undefined') {
-  new ResizeObserver(() => { scheduleEditorPages(); }).observe(document.getElementById('rich'));
-}
+document.getElementById('rich').addEventListener('paste', () => {
+  setTimeout(() => {
+    cleanUpEditorContent();
+    updateEditorPages();
+  }, 0);
+});
+window.addEventListener('resize', () => { scheduleEditorPages(); });
 
 // Focus editor when clicking empty areas around it
 document.getElementById('editor-scroll').addEventListener('click', (e) => {

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Print — Kaivo PDF</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #fff;
+    }
+    img {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      page-break-after: always;
+      break-after: page;
+    }
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="pages-container"></div>
+  <script src="./node_modules/pdfjs-dist/build/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = './node_modules/pdfjs-dist/build/pdf.worker.min.js';
+    
+    window.kaivo.on('init-print', async (data) => {
+      const { pdfPath, pages, landscape, pageSize, scale } = data;
+      window.kaivo.log(`[Composer] init-print starting. PDF: ${pdfPath}, Pages: ${JSON.stringify(pages)}, Size: ${pageSize}, Landscape: ${landscape}, Scale: ${scale}`);
+      try {
+        // Apply page size stylesheet
+        const style = document.createElement('style');
+        style.textContent = `@page { size: ${pageSize} ${landscape ? 'landscape' : 'portrait'}; margin: 0; }`;
+        document.head.appendChild(style);
+        
+        // Read the temporary PDF file
+        const res = await window.kaivo.readFile(pdfPath);
+        if (!res || !res.success) {
+          window.kaivo.log(`[Composer ERROR] Failed to read temp PDF file: ${res ? res.error : 'Result is null'}`);
+          window.kaivo.notifyPrintReady();
+          return;
+        }
+        
+        const bytes = Uint8Array.from(atob(res.data), c => c.charCodeAt(0));
+        const doc = await pdfjsLib.getDocument({ data: bytes }).promise;
+        const container = document.getElementById('pages-container');
+        container.innerHTML = '';
+        
+        window.kaivo.log(`[Composer] PDF loaded successfully. Total pages in doc: ${doc.numPages}. Pages to print: ${pages.length}`);
+        
+        const isLandscape = !!landscape;
+        const userScale = (scale || 100) / 100;
+        const printScale = 1.5 * userScale;
+        
+        const imagePromises = [];
+        
+        // Render target pages sequentially
+        for (const pageNum of pages) {
+          if (pageNum < 1 || pageNum > doc.numPages) continue;
+          
+          const page = await doc.getPage(pageNum);
+          const pageRotate = page.rotate || page.rotation || 0;
+          
+          let rot = pageRotate;
+          const viewportNormal = page.getViewport({ scale: 1.0, rotation: pageRotate });
+          if (isLandscape && viewportNormal.width < viewportNormal.height) {
+            rot = (rot + 90) % 360;
+          } else if (!isLandscape && viewportNormal.width > viewportNormal.height) {
+            rot = (rot + 90) % 360;
+          }
+          
+          // Render at optimized resolution for quality
+          const viewport = page.getViewport({ scale: printScale, rotation: rot });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          
+          await page.render({
+            canvasContext: canvas.getContext('2d'),
+            viewport: viewport
+          }).promise;
+          
+          const img = document.createElement('img');
+          const imgLoadPromise = new Promise((resolveImg) => {
+            img.onload = () => {
+              window.kaivo.log(`[Composer] Image load complete for page ${pageNum}`);
+              resolveImg();
+            };
+            img.onerror = () => {
+              window.kaivo.log(`[Composer ERROR] Image load error for page ${pageNum}`);
+              resolveImg();
+            };
+          });
+          imagePromises.push(imgLoadPromise);
+          
+          img.src = canvas.toDataURL('image/png');
+          container.appendChild(img);
+          window.kaivo.log(`[Composer] Rendered and appended page ${pageNum} to container`);
+        }
+        
+        window.kaivo.log(`[Composer] All pages composed. Waiting for image loading/decoding…`);
+        await Promise.all(imagePromises);
+        
+        window.kaivo.log(`[Composer] Image load promises resolved. Giving layout thread 150ms before print…`);
+        setTimeout(() => {
+          window.kaivo.log(`[Composer] Notifying main process to start printing.`);
+          window.kaivo.notifyPrintReady();
+        }, 150);
+        
+      } catch (err) {
+        window.kaivo.log(`[Composer ERROR] Exception: ${err.message}\nStack: ${err.stack}`);
+        window.kaivo.notifyPrintReady();
+      }
+    });
+  </script>
+</body>
+</html>
